@@ -16,6 +16,10 @@ public enum CommonErrorStatus implements ErrorReason{
     METHOD_ARGUMENT_NOT_VALID(HttpStatus.BAD_REQUEST, "ARGUMENT4001", "Argument Validation을 실패했습니다."),
     TYPE_OR_FORMAT_NOT_VALID(HttpStatus.BAD_REQUEST, "ARGUMENT4002", "Argument의 타입이나 형식이 올바르지 않습니다."),
     CONSTRAINTS_VIOLATION_EXCEPTION_ERROR(HttpStatus.BAD_REQUEST, "ARGUMENT4003", "ConstraintsViolationException 추출 도중 에러 발생"),
+
+    // 페이지네이션 관련
+    INVALID_PAGE_NUMBER(HttpStatus.BAD_REQUEST, "PAGE4001", "페이지 번호는 0 이상이어야 합니다."),
+    INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "PAGE4002", "페이지 크기는 1 이상 100 이하여야 합니다."),
             ;
 
     private final HttpStatus httpStatus;
