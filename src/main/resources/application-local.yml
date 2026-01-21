@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/piilot
-    username: ${LOCAL_DB_ID:lastcommit}
-    password: ${LOCAL_DB_PW:secret}
+    url: jdbc:postgresql://localhost:5432/piilot_db
+    username: ${LOCAL_DB_ID:piilot_user}
+    password: ${LOCAL_DB_PW:piilot_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -17,6 +17,11 @@ spring:
   docker:
     compose:
       enabled: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   level:
