@@ -35,6 +35,10 @@ public class DbPiiColumn extends BaseEntity {
     @Column(name = "enc_records_count")
     private Long encRecordsCount;
 
+    //비암호화된 레코드의 ID 값들을 저장하는 컬럼 - JSON배열 [1,5,23,156]형식
+    @Column(name = "unenc_records_key", columnDefinition = "TEXT")
+    private String unencRecordsKey;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_level", length = 10)
     private RiskLevel riskLevel;
