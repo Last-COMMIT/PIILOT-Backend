@@ -10,6 +10,8 @@ import com.lastcommit.piilot.global.auth.dto.response.SignupResponseDTO;
 import com.lastcommit.piilot.global.auth.dto.response.TokenResponseDTO;
 import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.error.status.CommonErrorStatus;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -71,9 +73,17 @@ public class AuthService {
     // 3. 토큰 재발급
     public TokenResponseDTO refresh(String refreshToken) {
         // 토큰 유효성 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new
-                    GeneralException(CommonErrorStatus.INVALID_TOKEN);
+        try {
+            // validateToken 내부에서 만료된 토큰일 경우 ExpiredJwtException이 발생할 수 있음
+            if (!jwtTokenProvider.validateToken(refreshToken)) {
+                throw new GeneralException(CommonErrorStatus.INVALID_TOKEN);
+            }
+        } catch (ExpiredJwtException e) {
+            // 만료된 토큰 에러가 발생하면 -> INVALID_TOKEN 예외로 변환해서 던짐 (401 에러로 응답하기 위해)
+            throw new GeneralException(CommonErrorStatus.INVALID_TOKEN);
+        } catch (JwtException | IllegalArgumentException e) {
+            // (선택사항) 그 외 형식이 잘못되거나 위조된 토큰도 INVALID_TOKEN으로 처리
+            throw new GeneralException(CommonErrorStatus.INVALID_TOKEN);
         }
 
         // 토큰에서 userId 추출 후 사용자 조회
