@@ -45,6 +45,6 @@ application-prod.yml
 claude.md
 
 ### Project Docs ###
-docs/
+project_docs/
 
 .claude
