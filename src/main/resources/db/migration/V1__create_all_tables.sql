@@ -4,39 +4,7 @@
 -- =====================================================
 
 -- =====================================================
--- 1. ENUM 타입 생성
--- =====================================================
-
--- 사용자 역할
-CREATE TYPE user_role AS ENUM ('ADMIN', 'USER');
-
--- 연결 상태 (DB/파일 서버 공통)
-CREATE TYPE connection_status AS ENUM ('CONNECTED', 'DISCONNECTED');
-
--- 스캔 상태 (DB/파일 스캔 공통)
-CREATE TYPE scan_status AS ENUM ('IN_PROGRESS', 'COMPLETED');
-
--- 위험도 (DB 컬럼/파일 공통)
-CREATE TYPE risk_level AS ENUM ('HIGH', 'MEDIUM', 'LOW');
-
--- 개인정보 유형
-CREATE TYPE pii_category AS ENUM ('NM', 'RRN', 'ADD', 'IP', 'PH', 'ACN', 'PP', 'EM', 'FACE');
-
--- 파일 카테고리
-CREATE TYPE file_category AS ENUM ('DOCUMENT', 'PHOTO', 'AUDIO', 'VIDEO');
-
--- 문서 유형
-CREATE TYPE document_type AS ENUM ('LAWS', 'INTERNAL_REGULATIONS', 'DB_INFO');
-
--- 사용자 작업 상태
-CREATE TYPE user_status AS ENUM ('ISSUE', 'RUNNING', 'DONE');
-
--- 이슈 해결 상태
-CREATE TYPE issue_status AS ENUM ('ACTIVE', 'RESOLVED');
-
-
--- =====================================================
--- 2. 독립 테이블 (FK 없음)
+-- 1. 독립 테이블 (FK 없음)
 -- =====================================================
 
 -- 사용자
@@ -45,7 +13,7 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    role user_role NOT NULL DEFAULT 'USER',
+    role VARCHAR(20) NOT NULL DEFAULT 'USER',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -71,14 +39,14 @@ CREATE TABLE file_server_types (
 -- 개인정보 유형
 CREATE TABLE pii_types (
     id SERIAL PRIMARY KEY,
-    type pii_category NOT NULL,
+    type VARCHAR(20) NOT NULL,
     risk_weight FLOAT NOT NULL
 );
 
 -- 파일 유형
 CREATE TABLE file_type (
     id SERIAL PRIMARY KEY,
-    type file_category NOT NULL,
+    type VARCHAR(20) NOT NULL,
     extension VARCHAR(30) NOT NULL
 );
 
@@ -105,7 +73,7 @@ CREATE TABLE document (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
-    type document_type NOT NULL,
+    type VARCHAR(30) NOT NULL,
     url VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -127,7 +95,7 @@ CREATE TABLE db_server_connections (
     encrypted_password VARCHAR(255) NOT NULL,
     manager_name VARCHAR(100) NOT NULL,
     manager_email VARCHAR(255) NOT NULL,
-    status connection_status NOT NULL DEFAULT 'DISCONNECTED',
+    status VARCHAR(20) NOT NULL DEFAULT 'DISCONNECTED',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_db_conn_user FOREIGN KEY (user_id) REFERENCES users(id),
@@ -149,7 +117,7 @@ CREATE TABLE file_server_connections (
     encrypted_password VARCHAR(255) NOT NULL,
     manager_name VARCHAR(100) NOT NULL,
     manager_email VARCHAR(255) NOT NULL,
-    status connection_status NOT NULL DEFAULT 'DISCONNECTED',
+    status VARCHAR(20) NOT NULL DEFAULT 'DISCONNECTED',
     retention_period_months INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -168,7 +136,7 @@ CREATE INDEX idx_file_conn_user_id ON file_server_connections(user_id);
 CREATE TABLE db_scan_history (
     id BIGSERIAL PRIMARY KEY,
     db_server_connection_id BIGINT NOT NULL,
-    status scan_status NOT NULL DEFAULT 'IN_PROGRESS',
+    status VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS',
     scan_start_time TIMESTAMP NOT NULL,
     scan_end_time TIMESTAMP,
     total_tables_count BIGINT NOT NULL DEFAULT 0,
@@ -200,7 +168,7 @@ CREATE INDEX idx_db_tables_conn_id ON db_tables(db_server_connection_id);
 CREATE TABLE file_scan_history (
     id BIGSERIAL PRIMARY KEY,
     file_server_connection_id BIGINT NOT NULL,
-    status scan_status NOT NULL DEFAULT 'IN_PROGRESS',
+    status VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS',
     scan_start_time TIMESTAMP NOT NULL,
     scan_end_time TIMESTAMP,
     total_files_count BIGINT NOT NULL DEFAULT 0,
@@ -222,7 +190,7 @@ CREATE TABLE files (
     file_path VARCHAR(1000) NOT NULL,
     is_encrypted BOOLEAN NOT NULL DEFAULT FALSE,
     has_personal_info BOOLEAN NOT NULL DEFAULT FALSE,
-    risk_level risk_level,
+    risk_level VARCHAR(10),
     last_modified_time TIMESTAMP NOT NULL,
     last_scanned_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -247,7 +215,7 @@ CREATE TABLE db_pii_columns (
     total_records_count BIGINT,
     enc_records_count BIGINT,
     unenc_records_key TEXT,
-    risk_level risk_level,
+    risk_level VARCHAR(10),
     total_issues_count INTEGER,
     is_issue_open BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -299,8 +267,8 @@ CREATE TABLE db_pii_issues (
     id BIGSERIAL PRIMARY KEY,
     column_id BIGINT NOT NULL,
     connection_id BIGINT,
-    user_status user_status NOT NULL DEFAULT 'ISSUE',
-    issue_status issue_status NOT NULL DEFAULT 'ACTIVE',
+    user_status VARCHAR(20) NOT NULL DEFAULT 'ISSUE',
+    issue_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     detected_at TIMESTAMP NOT NULL,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -316,8 +284,8 @@ CREATE TABLE file_pii_issues (
     id BIGSERIAL PRIMARY KEY,
     file_id BIGINT NOT NULL,
     connection_id BIGINT,
-    user_status user_status NOT NULL DEFAULT 'ISSUE',
-    issue_status issue_status NOT NULL DEFAULT 'ACTIVE',
+    user_status VARCHAR(20) NOT NULL DEFAULT 'ISSUE',
+    issue_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     detected_at TIMESTAMP NOT NULL,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
