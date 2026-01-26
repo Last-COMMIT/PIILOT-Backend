@@ -2,6 +2,7 @@ package com.lastcommit.piilot.domain.dbscan.service;
 
 import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.entity.DbServerConnection;
 import com.lastcommit.piilot.domain.dbscan.entity.DbmsType;
@@ -16,6 +17,8 @@ import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.error.status.CommonErrorStatus;
 import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -150,5 +153,15 @@ public class DbConnectionService {
         long totalColumns = dbTableRepository.sumTotalColumnsByConnectionId(connectionId);
 
         return DbConnectionDetailResponseDTO.of(connection, decryptedPassword, totalTables, totalColumns);
+    }
+
+    public Slice<DbConnectionListResponseDTO> getConnectionList(Long userId, Pageable pageable) {
+        Slice<DbServerConnection> connections = connectionRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+
+        return connections.map(connection -> {
+            long totalTables = dbTableRepository.countByDbServerConnectionId(connection.getId());
+            long totalColumns = dbTableRepository.sumTotalColumnsByConnectionId(connection.getId());
+            return DbConnectionListResponseDTO.of(connection, totalTables, totalColumns);
+        });
     }
 }
