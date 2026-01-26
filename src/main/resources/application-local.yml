@@ -23,6 +23,9 @@ spring:
       host: localhost
       port: 6379
 
+encryption:
+  aes-key: piilot-aes-256-secret-key-32by!! # 정확히 32바이트
+
 logging:
   level:
     com.lastcommit.piilot: debug
