@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.shared.ConnectionStatus;
 import com.lastcommit.piilot.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -53,4 +54,42 @@ public class DbServerConnection extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ConnectionStatus status;
+
+    @Builder
+    private DbServerConnection(User user, DbmsType dbmsType, String connectionName,
+                               String host, Integer port, String dbName,
+                               String username, String encryptedPassword,
+                               String managerName, String managerEmail, ConnectionStatus status) {
+        this.user = user;
+        this.dbmsType = dbmsType;
+        this.connectionName = connectionName;
+        this.host = host;
+        this.port = port;
+        this.dbName = dbName;
+        this.username = username;
+        this.encryptedPassword = encryptedPassword;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.status = status;
+    }
+
+    public void updateConnectionInfo(DbmsType dbmsType, String connectionName,
+                                     String host, Integer port, String dbName,
+                                     String username, String encryptedPassword,
+                                     String managerName, String managerEmail, ConnectionStatus status) {
+        this.dbmsType = dbmsType;
+        this.connectionName = connectionName;
+        this.host = host;
+        this.port = port;
+        this.dbName = dbName;
+        this.username = username;
+        this.encryptedPassword = encryptedPassword;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.status = status;
+    }
+
+    public void updateStatus(ConnectionStatus status) {
+        this.status = status;
+    }
 }
