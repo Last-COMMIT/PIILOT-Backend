@@ -8,10 +8,9 @@ import com.lastcommit.piilot.global.error.response.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+
 
 @RestController
 @RequestMapping("/api/db-connections")
@@ -28,5 +27,16 @@ public class DbConnectionController implements DbConnectionControllerDocs {
     ) {
         DbConnectionResponseDTO result = dbConnectionService.createConnection(userId, request);
         return CommonResponse.onCreated(result);
+    }
+
+    @Override
+    @PutMapping("/{connectionId}")
+    public CommonResponse<DbConnectionResponseDTO> updateConnection(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long connectionId,
+            @Valid @RequestBody DbConnectionRequestDTO request
+    ) {
+        DbConnectionResponseDTO result = dbConnectionService.updateConnection(userId, connectionId, request);
+        return CommonResponse.onSuccess(result);
     }
 }
