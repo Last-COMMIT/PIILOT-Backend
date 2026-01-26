@@ -65,4 +65,52 @@ public class DbConnectionService {
         DbServerConnection saved = connectionRepository.save(connection);
         return DbConnectionResponseDTO.from(saved);
     }
+
+    @Transactional
+    public DbConnectionResponseDTO updateConnection(Long userId, Long connectionId, DbConnectionRequestDTO request) {
+        // 1. 연결 정보 조회
+        DbServerConnection connection = connectionRepository.findById(connectionId)
+                .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.CONNECTION_NOT_FOUND));
+
+        // 2. 권한 검증 (본인 연결인지)
+        if (!connection.getUser().getId().equals(userId)) {
+            throw new GeneralException(DbConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
+        }
+
+        // 3. DBMS 유형 조회
+        DbmsType dbmsType = dbmsTypeRepository.findById(request.dbmsTypeId())
+                .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.DBMS_TYPE_NOT_FOUND));
+
+        // 4. 연결 이름 중복 검사 (자신의 연결 제외)
+        if (!connection.getConnectionName().equals(request.connectionName()) &&
+                connectionRepository.existsByConnectionNameAndUserId(request.connectionName(), userId)) {
+            throw new GeneralException(DbConnectionErrorStatus.CONNECTION_NAME_DUPLICATE);
+        }
+
+        // 5. 연결 테스트
+        boolean success = connectionTester.testConnection(
+                dbmsType, request.host(), request.port(),
+                request.dbName(), request.username(), request.password()
+        );
+        ConnectionStatus status = success ? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED;
+
+        // 6. 비밀번호 암호화
+        String encryptedPassword = aesEncryptor.encrypt(request.password());
+
+        // 7. 엔티티 업데이트
+        connection.updateConnectionInfo(
+                dbmsType,
+                request.connectionName(),
+                request.host(),
+                request.port(),
+                request.dbName(),
+                request.username(),
+                encryptedPassword,
+                request.managerName(),
+                request.managerEmail(),
+                status
+        );
+
+        return DbConnectionResponseDTO.from(connection);
+    }
 }
