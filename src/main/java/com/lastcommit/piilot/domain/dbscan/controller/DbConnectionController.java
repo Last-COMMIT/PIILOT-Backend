@@ -3,7 +3,10 @@ package com.lastcommit.piilot.domain.dbscan.controller;
 import com.lastcommit.piilot.domain.dbscan.docs.DbConnectionControllerDocs;
 import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import com.lastcommit.piilot.domain.dbscan.service.DbConnectionService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import jakarta.validation.Valid;
@@ -58,6 +61,17 @@ public class DbConnectionController implements DbConnectionControllerDocs {
             @PathVariable Long connectionId
     ) {
         DbConnectionDetailResponseDTO result = dbConnectionService.getConnectionDetail(userId, connectionId);
+        return CommonResponse.onSuccess(result);
+    }
+
+    @Override
+    @GetMapping
+    public CommonResponse<Slice<DbConnectionListResponseDTO>> getConnectionList(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Slice<DbConnectionListResponseDTO> result = dbConnectionService.getConnectionList(userId, PageRequest.of(page, size));
         return CommonResponse.onSuccess(result);
     }
 }

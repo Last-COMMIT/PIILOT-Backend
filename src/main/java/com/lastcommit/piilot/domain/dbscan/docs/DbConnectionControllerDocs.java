@@ -2,7 +2,9 @@ package com.lastcommit.piilot.domain.dbscan.docs;
 
 import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
+import org.springframework.data.domain.Slice;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,5 +63,15 @@ public interface DbConnectionControllerDocs {
     CommonResponse<DbConnectionDetailResponseDTO> getConnectionDetail(
             @Parameter(hidden = true) Long userId,
             @Parameter(description = "연결 ID") Long connectionId
+    );
+
+    @Operation(summary = "DB 연결 목록 조회", description = "DB 서버 연결 목록을 무한스크롤로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    CommonResponse<Slice<DbConnectionListResponseDTO>> getConnectionList(
+            @Parameter(hidden = true) Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") int page,
+            @Parameter(description = "페이지 크기") int size
     );
 }
