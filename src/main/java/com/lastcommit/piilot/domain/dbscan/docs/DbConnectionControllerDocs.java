@@ -39,4 +39,15 @@ public interface DbConnectionControllerDocs {
             @Parameter(description = "연결 ID") Long connectionId,
             DbConnectionRequestDTO request
     );
+
+    @Operation(summary = "DB 연결 삭제", description = "DB 서버 연결 정보를 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "접근 권한 없음"),
+            @ApiResponse(responseCode = "404", description = "연결 정보 없음")
+    })
+    CommonResponse<Void> deleteConnection(
+            @Parameter(hidden = true) Long userId,
+            @Parameter(description = "연결 ID") Long connectionId
+    );
 }

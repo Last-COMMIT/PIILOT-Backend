@@ -39,4 +39,14 @@ public class DbConnectionController implements DbConnectionControllerDocs {
         DbConnectionResponseDTO result = dbConnectionService.updateConnection(userId, connectionId, request);
         return CommonResponse.onSuccess(result);
     }
+
+    @Override
+    @DeleteMapping("/{connectionId}")
+    public CommonResponse<Void> deleteConnection(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long connectionId
+    ) {
+        dbConnectionService.deleteConnection(userId, connectionId);
+        return CommonResponse.onSuccess(null);
+    }
 }
