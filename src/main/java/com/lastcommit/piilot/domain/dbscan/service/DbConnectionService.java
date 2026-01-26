@@ -1,11 +1,13 @@
 package com.lastcommit.piilot.domain.dbscan.service;
 
 import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.entity.DbServerConnection;
 import com.lastcommit.piilot.domain.dbscan.entity.DbmsType;
 import com.lastcommit.piilot.domain.dbscan.exception.DbConnectionErrorStatus;
 import com.lastcommit.piilot.domain.dbscan.repository.DbServerConnectionRepository;
+import com.lastcommit.piilot.domain.dbscan.repository.DbTableRepository;
 import com.lastcommit.piilot.domain.dbscan.repository.DbmsTypeRepository;
 import com.lastcommit.piilot.domain.shared.ConnectionStatus;
 import com.lastcommit.piilot.domain.user.entity.User;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DbConnectionService {
 
     private final DbServerConnectionRepository connectionRepository;
+    private final DbTableRepository dbTableRepository;
     private final DbmsTypeRepository dbmsTypeRepository;
     private final UserRepository userRepository;
     private final DbConnectionTester connectionTester;
@@ -127,5 +130,25 @@ public class DbConnectionService {
 
         // 3. 삭제
         connectionRepository.delete(connection);
+    }
+
+    public DbConnectionDetailResponseDTO getConnectionDetail(Long userId, Long connectionId) {
+        // 1. 연결 정보 조회
+        DbServerConnection connection = connectionRepository.findById(connectionId)
+                .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.CONNECTION_NOT_FOUND));
+
+        // 2. 권한 검증 (본인 연결인지)
+        if (!connection.getUser().getId().equals(userId)) {
+            throw new GeneralException(DbConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
+        }
+
+        // 3. 비밀번호 복호화
+        String decryptedPassword = aesEncryptor.decrypt(connection.getEncryptedPassword());
+
+        // 4. 총 테이블수, 총 컬럼수 조회
+        long totalTables = dbTableRepository.countByDbServerConnectionId(connectionId);
+        long totalColumns = dbTableRepository.sumTotalColumnsByConnectionId(connectionId);
+
+        return DbConnectionDetailResponseDTO.of(connection, decryptedPassword, totalTables, totalColumns);
     }
 }
