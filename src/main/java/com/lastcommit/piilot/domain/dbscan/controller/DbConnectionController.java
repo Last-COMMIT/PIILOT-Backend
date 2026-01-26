@@ -2,6 +2,7 @@ package com.lastcommit.piilot.domain.dbscan.controller;
 
 import com.lastcommit.piilot.domain.dbscan.docs.DbConnectionControllerDocs;
 import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.service.DbConnectionService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
@@ -48,5 +49,15 @@ public class DbConnectionController implements DbConnectionControllerDocs {
     ) {
         dbConnectionService.deleteConnection(userId, connectionId);
         return CommonResponse.onSuccess(null);
+    }
+
+    @Override
+    @GetMapping("/{connectionId}")
+    public CommonResponse<DbConnectionDetailResponseDTO> getConnectionDetail(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long connectionId
+    ) {
+        DbConnectionDetailResponseDTO result = dbConnectionService.getConnectionDetail(userId, connectionId);
+        return CommonResponse.onSuccess(result);
     }
 }
