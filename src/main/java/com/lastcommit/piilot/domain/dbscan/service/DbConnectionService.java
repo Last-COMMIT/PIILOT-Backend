@@ -113,4 +113,19 @@ public class DbConnectionService {
 
         return DbConnectionResponseDTO.from(connection);
     }
+
+    @Transactional
+    public void deleteConnection(Long userId, Long connectionId) {
+        // 1. 연결 정보 조회
+        DbServerConnection connection = connectionRepository.findById(connectionId)
+                .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.CONNECTION_NOT_FOUND));
+
+        // 2. 권한 검증 (본인 연결인지)
+        if (!connection.getUser().getId().equals(userId)) {
+            throw new GeneralException(DbConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
+        }
+
+        // 3. 삭제
+        connectionRepository.delete(connection);
+    }
 }
