@@ -12,13 +12,12 @@ public record DbConnectionDetailResponseDTO(
         Integer port,
         String dbName,
         String username,
-        String password,
         String managerName,
         String managerEmail,
         Long totalTables,
         Long totalColumns
 ) {
-    public static DbConnectionDetailResponseDTO of(DbServerConnection entity, String decryptedPassword,
+    public static DbConnectionDetailResponseDTO of(DbServerConnection entity,
                                                     Long totalTables, Long totalColumns) {
         return new DbConnectionDetailResponseDTO(
                 entity.getId(),
@@ -29,7 +28,6 @@ public record DbConnectionDetailResponseDTO(
                 entity.getPort(),
                 entity.getDbName(),
                 entity.getUsername(),
-                decryptedPassword,
                 entity.getManagerName(),
                 entity.getManagerEmail(),
                 totalTables,

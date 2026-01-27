@@ -36,6 +36,11 @@ public class DbConnectionService {
 
     @Transactional
     public DbConnectionResponseDTO createConnection(Long userId, DbConnectionRequestDTO request) {
+        // 생성 시 비밀번호 필수
+        if (request.password() == null || request.password().isBlank()) {
+            throw new GeneralException(DbConnectionErrorStatus.PASSWORD_REQUIRED);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(CommonErrorStatus.USER_NOT_FOUND));
 
@@ -93,15 +98,21 @@ public class DbConnectionService {
             throw new GeneralException(DbConnectionErrorStatus.CONNECTION_NAME_DUPLICATE);
         }
 
-        // 5. 연결 테스트
+        // 5. 비밀번호 처리 (null/blank면 기존 유지)
+        boolean isPasswordChanged = request.password() != null && !request.password().isBlank();
+        String passwordForTest = isPasswordChanged
+                ? request.password()
+                : aesEncryptor.decrypt(connection.getEncryptedPassword());
+        String encryptedPassword = isPasswordChanged
+                ? aesEncryptor.encrypt(request.password())
+                : connection.getEncryptedPassword();
+
+        // 6. 연결 테스트
         boolean success = connectionTester.testConnection(
                 dbmsType, request.host(), request.port(),
-                request.dbName(), request.username(), request.password()
+                request.dbName(), request.username(), passwordForTest
         );
         ConnectionStatus status = success ? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED;
-
-        // 6. 비밀번호 암호화
-        String encryptedPassword = aesEncryptor.encrypt(request.password());
 
         // 7. 엔티티 업데이트
         connection.updateConnectionInfo(
@@ -145,14 +156,11 @@ public class DbConnectionService {
             throw new GeneralException(DbConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
         }
 
-        // 3. 비밀번호 복호화
-        String decryptedPassword = aesEncryptor.decrypt(connection.getEncryptedPassword());
-
-        // 4. 총 테이블수, 총 컬럼수 조회
+        // 3. 총 테이블수, 총 컬럼수 조회
         long totalTables = dbTableRepository.countByDbServerConnectionId(connectionId);
         long totalColumns = dbTableRepository.sumTotalColumnsByConnectionId(connectionId);
 
-        return DbConnectionDetailResponseDTO.of(connection, decryptedPassword, totalTables, totalColumns);
+        return DbConnectionDetailResponseDTO.of(connection, totalTables, totalColumns);
     }
 
     public Slice<DbConnectionListResponseDTO> getConnectionList(Long userId, Pageable pageable) {

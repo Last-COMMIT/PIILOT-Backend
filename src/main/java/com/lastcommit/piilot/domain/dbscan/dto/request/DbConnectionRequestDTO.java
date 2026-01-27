@@ -27,8 +27,7 @@ public record DbConnectionRequestDTO(
         @Size(max = 100, message = "사용자명은 100자 이하여야 합니다.")
         String username,
 
-        @NotBlank(message = "비밀번호는 필수입니다.")
-        String password,
+        String password,  // 생성 시 필수, 수정 시 선택 (null이면 기존 유지)
 
         @NotBlank(message = "담당자 이름은 필수입니다.")
         @Size(max = 100, message = "담당자 이름은 100자 이하여야 합니다.")
