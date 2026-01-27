@@ -33,6 +33,9 @@ public class File extends BaseEntity {
     @Column(name = "file_path", nullable = false, length = 1000)
     private String filePath;
 
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize = 0L;
+
     @Column(name = "is_encrypted", nullable = false)
     private Boolean isEncrypted;
 

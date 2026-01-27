@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.filescan.dto.request.FileConnectionRequestDT
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionResponseDTO;
+import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionStatsResponseDTO;
 import com.lastcommit.piilot.domain.filescan.entity.FileServerConnection;
 import com.lastcommit.piilot.domain.filescan.entity.FileServerType;
 import com.lastcommit.piilot.domain.filescan.exception.FileConnectionErrorStatus;
@@ -158,8 +159,18 @@ public class FileConnectionService {
         }
 
         long totalFiles = fileRepository.countByConnectionId(connectionId);
+        long totalFileSize = fileRepository.sumFileSizeByConnectionId(connectionId);
 
-        return FileConnectionDetailResponseDTO.of(connection, totalFiles);
+        return FileConnectionDetailResponseDTO.of(connection, totalFiles, totalFileSize);
+    }
+
+    public FileConnectionStatsResponseDTO getConnectionStats(Long userId) {
+        long totalConnections = connectionRepository.countByUserId(userId);
+        long activeConnections = connectionRepository.countByUserIdAndStatus(userId, ConnectionStatus.CONNECTED);
+        long totalFiles = fileRepository.countByConnectionUserId(userId);
+        long totalFileSize = fileRepository.sumFileSizeByConnectionUserId(userId);
+
+        return new FileConnectionStatsResponseDTO(totalConnections, activeConnections, totalFiles, totalFileSize);
     }
 
     public Slice<FileConnectionListResponseDTO> getConnectionList(Long userId, Pageable pageable) {
@@ -167,7 +178,8 @@ public class FileConnectionService {
 
         return connections.map(connection -> {
             long totalFiles = fileRepository.countByConnectionId(connection.getId());
-            return FileConnectionListResponseDTO.of(connection, totalFiles);
+            long totalFileSize = fileRepository.sumFileSizeByConnectionId(connection.getId());
+            return FileConnectionListResponseDTO.of(connection, totalFiles, totalFileSize);
         });
     }
 }

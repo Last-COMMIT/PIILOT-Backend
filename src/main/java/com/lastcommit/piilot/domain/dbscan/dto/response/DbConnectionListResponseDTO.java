@@ -19,7 +19,7 @@ public record DbConnectionListResponseDTO(
                 entity.getConnectionName(),
                 entity.getDbmsType().getName(),
                 entity.getStatus(),
-                entity.getHost(),
+                entity.getHost() + ":" + entity.getPort(),
                 entity.getDbName(),
                 totalTables,
                 totalColumns

@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionStatsResponseDTO;
 import org.springframework.data.domain.Slice;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,5 +74,13 @@ public interface DbConnectionControllerDocs {
             @Parameter(hidden = true) Long userId,
             @Parameter(description = "페이지 번호 (0부터 시작)") int page,
             @Parameter(description = "페이지 크기") int size
+    );
+
+    @Operation(summary = "DB 연결 통계 조회", description = "사용자의 DB 서버 연결 통계를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    CommonResponse<DbConnectionStatsResponseDTO> getConnectionStats(
+            @Parameter(hidden = true) Long userId
     );
 }
