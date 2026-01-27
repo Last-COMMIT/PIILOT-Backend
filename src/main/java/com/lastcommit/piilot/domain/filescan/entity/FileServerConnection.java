@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.shared.ConnectionStatus;
 import com.lastcommit.piilot.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -56,4 +57,46 @@ public class FileServerConnection extends BaseEntity {
 
     @Column(name = "retention_period_months", nullable = false)
     private Integer retentionPeriodMonths;
+
+    @Builder
+    private FileServerConnection(FileServerType serverType, User user, String connectionName,
+                                  String host, Integer port, String defaultPath,
+                                  String username, String encryptedPassword,
+                                  String managerName, String managerEmail,
+                                  ConnectionStatus status, Integer retentionPeriodMonths) {
+        this.serverType = serverType;
+        this.user = user;
+        this.connectionName = connectionName;
+        this.host = host;
+        this.port = port;
+        this.defaultPath = defaultPath;
+        this.username = username;
+        this.encryptedPassword = encryptedPassword;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.status = status;
+        this.retentionPeriodMonths = retentionPeriodMonths;
+    }
+
+    public void updateConnectionInfo(FileServerType serverType, String connectionName,
+                                      String host, Integer port, String defaultPath,
+                                      String username, String encryptedPassword,
+                                      String managerName, String managerEmail,
+                                      ConnectionStatus status, Integer retentionPeriodMonths) {
+        this.serverType = serverType;
+        this.connectionName = connectionName;
+        this.host = host;
+        this.port = port;
+        this.defaultPath = defaultPath;
+        this.username = username;
+        this.encryptedPassword = encryptedPassword;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.status = status;
+        this.retentionPeriodMonths = retentionPeriodMonths;
+    }
+
+    public void updateStatus(ConnectionStatus status) {
+        this.status = status;
+    }
 }
