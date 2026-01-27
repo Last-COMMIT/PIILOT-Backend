@@ -11,4 +11,9 @@ public interface DbTableRepository extends JpaRepository<DbTable, Long> {
 
     @Query("SELECT COALESCE(SUM(t.totalColumns), 0) FROM DbTable t WHERE t.dbServerConnection.id = :connectionId")
     long sumTotalColumnsByConnectionId(@Param("connectionId") Long connectionId);
+
+    long countByDbServerConnectionUserId(Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.totalColumns), 0) FROM DbTable t WHERE t.dbServerConnection.user.id = :userId")
+    long sumTotalColumnsByUserId(@Param("userId") Long userId);
 }

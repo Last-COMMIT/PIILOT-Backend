@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionStatsResponseDTO;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import com.lastcommit.piilot.domain.dbscan.service.DbConnectionService;
@@ -72,6 +73,15 @@ public class DbConnectionController implements DbConnectionControllerDocs {
             @RequestParam(defaultValue = "10") int size
     ) {
         Slice<DbConnectionListResponseDTO> result = dbConnectionService.getConnectionList(userId, PageRequest.of(page, size));
+        return CommonResponse.onSuccess(result);
+    }
+
+    @Override
+    @GetMapping("/stats")
+    public CommonResponse<DbConnectionStatsResponseDTO> getConnectionStats(
+            @AuthenticationPrincipal Long userId
+    ) {
+        DbConnectionStatsResponseDTO result = dbConnectionService.getConnectionStats(userId);
         return CommonResponse.onSuccess(result);
     }
 }
