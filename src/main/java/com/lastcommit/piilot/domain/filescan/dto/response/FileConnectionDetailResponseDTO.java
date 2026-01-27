@@ -15,9 +15,10 @@ public record FileConnectionDetailResponseDTO(
         String managerName,
         String managerEmail,
         Integer retentionPeriodMonths,
-        Long totalFiles
+        Long totalFiles,
+        Long totalFileSize
 ) {
-    public static FileConnectionDetailResponseDTO of(FileServerConnection entity, Long totalFiles) {
+    public static FileConnectionDetailResponseDTO of(FileServerConnection entity, Long totalFiles, Long totalFileSize) {
         return new FileConnectionDetailResponseDTO(
                 entity.getId(),
                 entity.getConnectionName(),
@@ -30,7 +31,8 @@ public record FileConnectionDetailResponseDTO(
                 entity.getManagerName(),
                 entity.getManagerEmail(),
                 entity.getRetentionPeriodMonths(),
-                totalFiles
+                totalFiles,
+                totalFileSize
         );
     }
 }

@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.dbscan.dto.request.DbConnectionRequestDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionResponseDTO;
+import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionStatsResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.entity.DbServerConnection;
 import com.lastcommit.piilot.domain.dbscan.entity.DbmsType;
 import com.lastcommit.piilot.domain.dbscan.exception.DbConnectionErrorStatus;
@@ -161,6 +162,15 @@ public class DbConnectionService {
         long totalColumns = dbTableRepository.sumTotalColumnsByConnectionId(connectionId);
 
         return DbConnectionDetailResponseDTO.of(connection, totalTables, totalColumns);
+    }
+
+    public DbConnectionStatsResponseDTO getConnectionStats(Long userId) {
+        long totalConnections = connectionRepository.countByUserId(userId);
+        long activeConnections = connectionRepository.countByUserIdAndStatus(userId, ConnectionStatus.CONNECTED);
+        long totalTables = dbTableRepository.countByDbServerConnectionUserId(userId);
+        long totalColumns = dbTableRepository.sumTotalColumnsByUserId(userId);
+
+        return new DbConnectionStatsResponseDTO(totalConnections, activeConnections, totalTables, totalColumns);
     }
 
     public Slice<DbConnectionListResponseDTO> getConnectionList(Long userId, Pageable pageable) {
