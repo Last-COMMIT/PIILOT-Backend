@@ -58,6 +58,12 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // SFTP (JSch)
+    implementation 'com.jcraft:jsch:0.1.55'
+
+    // FTP (Apache Commons Net)
+    implementation 'commons-net:commons-net:3.11.1'
 }
 
 tasks.named('test') {

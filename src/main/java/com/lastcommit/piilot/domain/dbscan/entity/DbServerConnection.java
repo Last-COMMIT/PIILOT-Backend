@@ -10,7 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "db_server_connections")
+@Table(name = "db_server_connections",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "connection_name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DbServerConnection extends BaseEntity {
