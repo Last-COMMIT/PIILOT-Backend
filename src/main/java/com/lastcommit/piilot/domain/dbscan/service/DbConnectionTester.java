@@ -23,6 +23,7 @@ public class DbConnectionTester {
 
             try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
                  Statement statement = connection.createStatement()) {
+                statement.setQueryTimeout(CONNECTION_TIMEOUT_SECONDS);
                 statement.execute(dbmsType.getTestQuery());
                 return true;
             }
