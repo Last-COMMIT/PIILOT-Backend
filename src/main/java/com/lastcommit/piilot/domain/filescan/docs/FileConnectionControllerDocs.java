@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.filescan.dto.request.FileConnectionRequestDT
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionResponseDTO;
+import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionStatsResponseDTO;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -86,5 +87,13 @@ public interface FileConnectionControllerDocs {
             @Parameter(hidden = true) Long userId,
             @Parameter(description = "페이지 번호 (0부터 시작)") int page,
             @Parameter(description = "페이지 크기") int size
+    );
+
+    @Operation(summary = "파일 서버 연결 통계 조회", description = "사용자의 파일 서버 연결 통계를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    CommonResponse<FileConnectionStatsResponseDTO> getConnectionStats(
+            @Parameter(hidden = true) Long userId
     );
 }

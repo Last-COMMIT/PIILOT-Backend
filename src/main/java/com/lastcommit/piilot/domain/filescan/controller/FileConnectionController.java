@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.filescan.dto.request.FileConnectionRequestDT
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionDetailResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionListResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionResponseDTO;
+import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionStatsResponseDTO;
 import com.lastcommit.piilot.domain.filescan.service.FileConnectionService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import jakarta.validation.Valid;
@@ -70,6 +71,15 @@ public class FileConnectionController implements FileConnectionControllerDocs {
             @RequestParam(defaultValue = "10") int size
     ) {
         Slice<FileConnectionListResponseDTO> result = fileConnectionService.getConnectionList(userId, PageRequest.of(page, size));
+        return CommonResponse.onSuccess(result);
+    }
+
+    @Override
+    @GetMapping("/stats")
+    public CommonResponse<FileConnectionStatsResponseDTO> getConnectionStats(
+            @AuthenticationPrincipal Long userId
+    ) {
+        FileConnectionStatsResponseDTO result = fileConnectionService.getConnectionStats(userId);
         return CommonResponse.onSuccess(result);
     }
 }

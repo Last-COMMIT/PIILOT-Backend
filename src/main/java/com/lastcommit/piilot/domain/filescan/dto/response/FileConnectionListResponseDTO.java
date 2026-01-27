@@ -12,9 +12,10 @@ public record FileConnectionListResponseDTO(
         String serverTypeName,
         String host,
         Long totalFiles,
+        Long totalFileSize,
         LocalDateTime createdAt
 ) {
-    public static FileConnectionListResponseDTO of(FileServerConnection entity, Long totalFiles) {
+    public static FileConnectionListResponseDTO of(FileServerConnection entity, Long totalFiles, Long totalFileSize) {
         return new FileConnectionListResponseDTO(
                 entity.getId(),
                 entity.getConnectionName(),
@@ -22,6 +23,7 @@ public record FileConnectionListResponseDTO(
                 entity.getServerType().getName(),
                 entity.getHost() + ":" + entity.getPort(),
                 totalFiles,
+                totalFileSize,
                 entity.getCreatedAt()
         );
     }
