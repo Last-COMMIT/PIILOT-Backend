@@ -20,7 +20,7 @@ public record FileConnectionListResponseDTO(
                 entity.getConnectionName(),
                 entity.getStatus(),
                 entity.getServerType().getName(),
-                entity.getHost(),
+                entity.getHost() + ":" + entity.getPort(),
                 totalFiles,
                 entity.getCreatedAt()
         );
