@@ -25,8 +25,8 @@ public class DbPiiIssue extends BaseEntity {
     private DbPiiColumn dbPiiColumn;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "connection_id")
-    private  DbServerConnection connection;
+    @JoinColumn(name = "db_server_connection_id")
+    private DbServerConnection dbServerConnection;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_status", nullable = false, length = 20)
