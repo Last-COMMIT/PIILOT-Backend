@@ -47,4 +47,7 @@ claude.md
 ### Project Docs ###
 project_docs/
 
+### local run script ###
+run-local.ps1
+
 .claude
