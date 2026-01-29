@@ -65,10 +65,14 @@ public class DbPiiColumnRepositoryImpl implements DbPiiColumnRepositoryCustom {
                 .where(dbServerConnection.user.id.eq(userId))
                 .fetchOne();
 
-        long totalRecords = recordCounts.get(dbPiiColumn.totalRecordsCount.sum()) != null
-                ? recordCounts.get(dbPiiColumn.totalRecordsCount.sum()) : 0L;
-        long encRecords = recordCounts.get(dbPiiColumn.encRecordsCount.sum()) != null
-                ? recordCounts.get(dbPiiColumn.encRecordsCount.sum()) : 0L;
+        long totalRecords = 0L;
+        long encRecords = 0L;
+        if (recordCounts != null) {
+            totalRecords = recordCounts.get(dbPiiColumn.totalRecordsCount.sum()) != null
+                    ? recordCounts.get(dbPiiColumn.totalRecordsCount.sum()) : 0L;
+            encRecords = recordCounts.get(dbPiiColumn.encRecordsCount.sum()) != null
+                    ? recordCounts.get(dbPiiColumn.encRecordsCount.sum()) : 0L;
+        }
 
         double encryptionRate = totalRecords > 0
                 ? Math.round((encRecords * 100.0 / totalRecords) * 10) / 10.0
