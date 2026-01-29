@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/piilot_db
+    url: jdbc:postgresql://localhost:5432/piilot_db
     username: ${LOCAL_DB_ID}
     password: ${LOCAL_DB_PW}
     driver-class-name: org.postgresql.Driver
@@ -25,6 +25,10 @@ spring:
 
 encryption:
   aes-key: piilot-aes-256-secret-key-32by!! # 정확히 32바이트
+
+ai-server:
+  base-url: http://localhost:8000
+  timeout-seconds: 1800  # AI 서버는 LLM 처리로 시간이 오래 걸릴 수 있음
 
 logging:
   level:
