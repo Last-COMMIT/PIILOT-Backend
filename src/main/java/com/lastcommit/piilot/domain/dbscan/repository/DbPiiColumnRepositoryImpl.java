@@ -167,10 +167,14 @@ public class DbPiiColumnRepositoryImpl implements DbPiiColumnRepositoryCustom {
             return null;
         }
         if (encrypted) {
-            return dbPiiColumn.encRecordsCount.gt(0L);
+            // 완전 암호화: encRecordsCount == totalRecordsCount (둘 다 > 0)
+            return dbPiiColumn.encRecordsCount.eq(dbPiiColumn.totalRecordsCount)
+                    .and(dbPiiColumn.totalRecordsCount.gt(0L));
         } else {
-            return dbPiiColumn.encRecordsCount.eq(0L)
-                    .or(dbPiiColumn.encRecordsCount.isNull());
+            // 비암호화 또는 부분 암호화: 1개라도 암호화 안된 레코드가 있으면 해당
+            return dbPiiColumn.encRecordsCount.isNull()
+                    .or(dbPiiColumn.encRecordsCount.eq(0L))
+                    .or(dbPiiColumn.encRecordsCount.lt(dbPiiColumn.totalRecordsCount));
         }
     }
 
