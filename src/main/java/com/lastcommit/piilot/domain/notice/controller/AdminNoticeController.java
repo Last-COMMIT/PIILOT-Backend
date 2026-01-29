@@ -2,7 +2,7 @@ package com.lastcommit.piilot.domain.notice.controller;
 
 import com.lastcommit.piilot.domain.notice.docs.AdminNoticeControllerDocs;
 import com.lastcommit.piilot.domain.notice.dto.request.NoticeCreateRequestDTO;
-import com.lastcommit.piilot.domain.notice.dto.response.NoticeResponseDTO;
+import com.lastcommit.piilot.domain.notice.dto.response.NoticeListResponseDTO;
 import com.lastcommit.piilot.domain.notice.service.NoticeService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import jakarta.validation.Valid;
@@ -19,11 +19,11 @@ public class AdminNoticeController implements AdminNoticeControllerDocs {
 
     @Override
     @PostMapping
-    public CommonResponse<NoticeResponseDTO> createNotice(
+    public CommonResponse<NoticeListResponseDTO> createNotice(
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody NoticeCreateRequestDTO request
     ) {
-        NoticeResponseDTO result = noticeService.createNotice(userId, request);
+        NoticeListResponseDTO result = noticeService.createNotice(userId, request);
         return CommonResponse.onCreated(result);
     }
 

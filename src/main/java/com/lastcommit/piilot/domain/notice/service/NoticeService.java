@@ -3,7 +3,6 @@ package com.lastcommit.piilot.domain.notice.service;
 import com.lastcommit.piilot.domain.notice.dto.request.NoticeCreateRequestDTO;
 import com.lastcommit.piilot.domain.notice.dto.response.NoticeDetailResponseDTO;
 import com.lastcommit.piilot.domain.notice.dto.response.NoticeListResponseDTO;
-import com.lastcommit.piilot.domain.notice.dto.response.NoticeResponseDTO;
 import com.lastcommit.piilot.domain.notice.entity.Notice;
 import com.lastcommit.piilot.domain.notice.exception.NoticeErrorStatus;
 import com.lastcommit.piilot.domain.notice.repository.NoticeRepository;
@@ -26,7 +25,7 @@ public class NoticeService {
     private final UserRepository userRepository;
 
     @Transactional
-    public NoticeResponseDTO createNotice(Long userId, NoticeCreateRequestDTO request) {
+    public NoticeListResponseDTO createNotice(Long userId, NoticeCreateRequestDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(CommonErrorStatus.USER_NOT_FOUND));
 
@@ -37,7 +36,7 @@ public class NoticeService {
                 .build();
 
         Notice saved = noticeRepository.save(notice);
-        return NoticeResponseDTO.from(saved);
+        return NoticeListResponseDTO.from(saved);
     }
 
     @Transactional

@@ -1,7 +1,7 @@
 package com.lastcommit.piilot.domain.notice.docs;
 
 import com.lastcommit.piilot.domain.notice.dto.request.NoticeCreateRequestDTO;
-import com.lastcommit.piilot.domain.notice.dto.response.NoticeResponseDTO;
+import com.lastcommit.piilot.domain.notice.dto.response.NoticeListResponseDTO;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,7 +20,7 @@ public interface AdminNoticeControllerDocs {
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @ApiResponse(responseCode = "403", description = "관리자 권한 필요")
     })
-    CommonResponse<NoticeResponseDTO> createNotice(
+    CommonResponse<NoticeListResponseDTO> createNotice(
             @Parameter(hidden = true) Long userId,
             NoticeCreateRequestDTO request
     );
