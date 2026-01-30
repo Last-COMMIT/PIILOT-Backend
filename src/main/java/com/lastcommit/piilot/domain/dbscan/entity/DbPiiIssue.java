@@ -53,6 +53,20 @@ public class DbPiiIssue extends BaseEntity {
         this.detectedAt = detectedAt;
     }
 
+    /**
+     * 작업 상태 변경
+     */
+    public void updateUserStatus(UserStatus newStatus) {
+        this.userStatus = newStatus;
+    }
+
+    /**
+     * 다음 작업 상태로 전환 (순환: ISSUE -> RUNNING -> DONE -> ISSUE)
+     */
+    public void cycleUserStatus() {
+        this.userStatus = this.userStatus.next();
+    }
+
     public void resolve(LocalDateTime resolvedAt) {
         this.issueStatus = IssueStatus.RESOLVED;
         this.resolvedAt = resolvedAt;

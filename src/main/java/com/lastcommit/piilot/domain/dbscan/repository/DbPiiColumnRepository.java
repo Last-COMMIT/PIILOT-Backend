@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface DbPiiColumnRepository extends JpaRepository<DbPiiColumn, Long> {
+public interface DbPiiColumnRepository extends JpaRepository<DbPiiColumn, Long>, DbPiiColumnRepositoryCustom {
 
     List<DbPiiColumn> findByDbTableId(Long tableId);
 
