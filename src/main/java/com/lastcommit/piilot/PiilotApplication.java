@@ -1,5 +1,6 @@
 package com.lastcommit.piilot;
 
+import com.lastcommit.piilot.global.config.AiServerProperties;
 import com.lastcommit.piilot.global.config.JwtProperties;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
@@ -13,7 +14,7 @@ import java.util.TimeZone;
 @SpringBootApplication
 @EnableJpaRepositories
 @EnableJpaAuditing
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, AiServerProperties.class})
 public class PiilotApplication {
 
     @PostConstruct

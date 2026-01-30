@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.shared.PiiType;
 import com.lastcommit.piilot.domain.shared.RiskLevel;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -48,4 +49,33 @@ public class DbPiiColumn extends BaseEntity {
 
     @Column(name = "is_issue_open", nullable = false)
     private Boolean isIssueOpen;
+
+    @Builder
+    private DbPiiColumn(DbTable dbTable, PiiType piiType, String name,
+                        Boolean isIssueOpen, Integer totalIssuesCount) {
+        this.dbTable = dbTable;
+        this.piiType = piiType;
+        this.name = name;
+        this.isIssueOpen = isIssueOpen != null ? isIssueOpen : false;
+        this.totalIssuesCount = totalIssuesCount != null ? totalIssuesCount : 0;
+    }
+
+    public void updateEncryptionResults(Long totalRecordsCount, Long encRecordsCount, String unencRecordsKey) {
+        this.totalRecordsCount = totalRecordsCount;
+        this.encRecordsCount = encRecordsCount;
+        this.unencRecordsKey = unencRecordsKey;
+    }
+
+    public void updateRiskLevel(RiskLevel riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public void incrementIssueCount() {
+        this.totalIssuesCount = (this.totalIssuesCount != null ? this.totalIssuesCount : 0) + 1;
+        this.isIssueOpen = true;
+    }
+
+    public void closeIssue() {
+        this.isIssueOpen = false;
+    }
 }
