@@ -65,7 +65,7 @@ public class DbPiiService {
         }
 
         if (tableId != null) {
-            validateTableAccess(userId, tableId);
+            validateTableAccess(userId, tableId, connectionId);
         }
 
         DbPiiStatsDTO stats = piiColumnRepository.calculateStats(
@@ -91,12 +91,16 @@ public class DbPiiService {
         }
     }
 
-    private void validateTableAccess(Long userId, Long tableId) {
+    private void validateTableAccess(Long userId, Long tableId, Long connectionId) {
         DbTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new GeneralException(DbPiiErrorStatus.TABLE_NOT_FOUND));
 
         if (!table.getDbServerConnection().getUser().getId().equals(userId)) {
             throw new GeneralException(DbPiiErrorStatus.CONNECTION_ACCESS_DENIED);
+        }
+
+        if (connectionId != null && !table.getDbServerConnection().getId().equals(connectionId)) {
+            throw new GeneralException(DbPiiErrorStatus.TABLE_CONNECTION_MISMATCH);
         }
     }
 }
