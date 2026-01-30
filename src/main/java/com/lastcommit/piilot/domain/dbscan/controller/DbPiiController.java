@@ -7,7 +7,10 @@ import com.lastcommit.piilot.domain.dbscan.dto.response.DbPiiTableResponseDTO;
 import com.lastcommit.piilot.domain.dbscan.service.DbPiiService;
 import com.lastcommit.piilot.domain.shared.PiiCategory;
 import com.lastcommit.piilot.domain.shared.RiskLevel;
-import com.lastcommit.piilot.global.error.response.CommonResponse;import lombok.RequiredArgsConstructor;
+import com.lastcommit.piilot.global.error.response.CommonResponse;
+import com.lastcommit.piilot.global.validation.annotation.ValidPage;
+import com.lastcommit.piilot.global.validation.annotation.ValidSize;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -52,8 +55,8 @@ public class DbPiiController implements DbPiiControllerDocs {
             @RequestParam(required = false) Boolean encrypted,
             @RequestParam(required = false) RiskLevel riskLevel,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @ValidPage @RequestParam(defaultValue = "0") int page,
+            @ValidSize @RequestParam(defaultValue = "20") int size
     ) {
         DbPiiColumnListResponseDTO result = dbPiiService.getPiiColumns(
                 userId, connectionId, tableId, piiType, encrypted, riskLevel, keyword,
