@@ -1,10 +1,10 @@
 package com.lastcommit.piilot.domain.dbscan.entity;
 
-
 import com.lastcommit.piilot.domain.shared.BaseEntity;
 import com.lastcommit.piilot.domain.shared.ScanStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -42,4 +42,25 @@ public class DbScanHistory extends BaseEntity {
 
     @Column(name = "scanned_columns_count", nullable = false)
     private Long scannedColumnsCount;
+
+    @Builder
+    private DbScanHistory(DbServerConnection dbServerConnection, ScanStatus status,
+                          LocalDateTime scanStartTime, Long totalTablesCount,
+                          Long totalColumnsCount, Long scannedColumnsCount) {
+        this.dbServerConnection = dbServerConnection;
+        this.status = status;
+        this.scanStartTime = scanStartTime;
+        this.totalTablesCount = totalTablesCount;
+        this.totalColumnsCount = totalColumnsCount;
+        this.scannedColumnsCount = scannedColumnsCount;
+    }
+
+    public void updateCompleted(LocalDateTime scanEndTime, ScanStatus status,
+                               Long totalTablesCount, Long totalColumnsCount, Long scannedColumnsCount) {
+        this.scanEndTime = scanEndTime;
+        this.status = status;
+        this.totalTablesCount = totalTablesCount;
+        this.totalColumnsCount = totalColumnsCount;
+        this.scannedColumnsCount = scannedColumnsCount;
+    }
 }

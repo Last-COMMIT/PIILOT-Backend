@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.shared.IssueStatus;
 import com.lastcommit.piilot.domain.shared.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,8 +26,8 @@ public class DbPiiIssue extends BaseEntity {
     private DbPiiColumn dbPiiColumn;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "db_server_connection_id")
-    private DbServerConnection dbServerConnection;
+    @JoinColumn(name = "connection_id")
+    private DbServerConnection connection;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_status", nullable = false, length = 20)
@@ -42,6 +43,16 @@ public class DbPiiIssue extends BaseEntity {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    @Builder
+    private DbPiiIssue(DbPiiColumn dbPiiColumn, DbServerConnection connection,
+                       UserStatus userStatus, IssueStatus issueStatus, LocalDateTime detectedAt) {
+        this.dbPiiColumn = dbPiiColumn;
+        this.connection = connection;
+        this.userStatus = userStatus;
+        this.issueStatus = issueStatus;
+        this.detectedAt = detectedAt;
+    }
+
     /**
      * 작업 상태 변경
      */
@@ -54,5 +65,10 @@ public class DbPiiIssue extends BaseEntity {
      */
     public void cycleUserStatus() {
         this.userStatus = this.userStatus.next();
+    }
+
+    public void resolve(LocalDateTime resolvedAt) {
+        this.issueStatus = IssueStatus.RESOLVED;
+        this.resolvedAt = resolvedAt;
     }
 }
