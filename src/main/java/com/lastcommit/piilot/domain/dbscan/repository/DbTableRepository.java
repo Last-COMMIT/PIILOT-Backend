@@ -23,4 +23,6 @@ public interface DbTableRepository extends JpaRepository<DbTable, Long> {
     List<DbTable> findByDbServerConnectionId(Long connectionId);
 
     Optional<DbTable> findByDbServerConnectionIdAndName(Long connectionId, String name);
+
+    List<DbTable> findByDbServerConnectionIdOrderByNameAsc(Long connectionId);
 }
