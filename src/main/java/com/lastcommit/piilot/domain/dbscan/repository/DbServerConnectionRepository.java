@@ -19,4 +19,6 @@ public interface DbServerConnectionRepository extends JpaRepository<DbServerConn
     long countByUserIdAndStatus(Long userId, ConnectionStatus status);
 
     List<DbServerConnection> findByStatus(ConnectionStatus status);
+
+    List<DbServerConnection> findByUserIdOrderByConnectionNameAsc(Long userId);
 }
