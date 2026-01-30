@@ -6,6 +6,8 @@ import com.lastcommit.piilot.domain.dbscan.dto.response.DbPiiTableResponseDTO;
 import com.lastcommit.piilot.domain.shared.PiiCategory;
 import com.lastcommit.piilot.domain.shared.RiskLevel;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
+import com.lastcommit.piilot.global.validation.annotation.ValidPage;
+import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,7 +54,7 @@ public interface DbPiiControllerDocs {
             @Parameter(description = "암호화 여부 (선택): true=암호화됨, false=보안필요") Boolean encrypted,
             @Parameter(description = "위험도 (선택): HIGH, MEDIUM, LOW") RiskLevel riskLevel,
             @Parameter(description = "컬럼명 검색어 (선택)") String keyword,
-            @Parameter(description = "페이지 번호 (0부터 시작)") int page,
-            @Parameter(description = "페이지 크기") int size
+            @ValidPage @Parameter(description = "페이지 번호 (0부터 시작)") int page,
+            @ValidSize @Parameter(description = "페이지 크기") int size
     );
 }
