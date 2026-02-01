@@ -1,6 +1,5 @@
 package com.lastcommit.piilot.domain.dbscan.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lastcommit.piilot.domain.dbscan.dto.response.UnencryptedRecordDTO;
 import com.lastcommit.piilot.domain.dbscan.entity.DbPiiColumn;
@@ -36,7 +35,7 @@ public class UnencryptedDataFetcher {
         String rawKeys = piiColumn.getUnencRecordsKey();
         log.debug("unenc_records_key for column '{}': {}", piiColumn.getName(), rawKeys);
 
-        List<Long> unencRecordKeys = parseUnencRecordKeys(rawKeys);
+        List<String> unencRecordKeys = parseUnencRecordKeys(rawKeys);
         if (unencRecordKeys.isEmpty()) {
             log.warn("No unencrypted record keys found for column '{}'. Raw value: {}", piiColumn.getName(), rawKeys);
             return Collections.emptyList();
@@ -45,7 +44,7 @@ public class UnencryptedDataFetcher {
         log.debug("Parsed {} unencrypted record keys for column '{}'", unencRecordKeys.size(), piiColumn.getName());
 
         int effectiveLimit = limit > 0 ? limit : DEFAULT_LIMIT;
-        List<Long> limitedKeys = unencRecordKeys.stream()
+        List<String> limitedKeys = unencRecordKeys.stream()
                 .limit(effectiveLimit)
                 .toList();
 
@@ -90,13 +89,21 @@ public class UnencryptedDataFetcher {
         return fetch(connection, table, piiColumn, decryptedPassword, DEFAULT_LIMIT);
     }
 
-    private List<Long> parseUnencRecordKeys(String unencRecordsKey) {
+    /**
+     * unenc_records_key JSON 배열을 파싱합니다.
+     * JSON 숫자/문자열 모두 지원하기 위해 List<?>로 파싱 후 String 변환합니다.
+     */
+    private List<String> parseUnencRecordKeys(String unencRecordsKey) {
         if (unencRecordsKey == null || unencRecordsKey.isBlank()) {
             return Collections.emptyList();
         }
 
         try {
-            return objectMapper.readValue(unencRecordsKey, new TypeReference<List<Long>>() {});
+            // JSON 숫자([1,2,3])와 문자열(["1","2","3"]) 모두 지원
+            List<?> rawKeys = objectMapper.readValue(unencRecordsKey, List.class);
+            return rawKeys.stream()
+                    .map(String::valueOf)
+                    .toList();
         } catch (Exception e) {
             log.error("Failed to parse unencRecordsKey: {}", e.getMessage(), e);
             return Collections.emptyList();
@@ -176,16 +183,24 @@ public class UnencryptedDataFetcher {
         return null;
     }
 
+    /**
+     * 비암호화 레코드를 조회합니다.
+     * PK 컬럼 타입을 감지하여 적절한 Java 타입으로 변환 후 바인딩합니다.
+     */
     private List<UnencryptedRecordDTO> fetchRecords(
             Connection conn,
             String tableName,
             String pkColumn,
             String piiColumn,
-            List<Long> keys
+            List<String> keys
     ) throws SQLException {
         if (keys.isEmpty()) {
             return Collections.emptyList();
         }
+
+        // PK 컬럼 타입 감지
+        int pkColumnType = getPkColumnType(conn, tableName, pkColumn);
+        log.debug("PK column '{}' type: {}", pkColumn, pkColumnType);
 
         String placeholders = keys.stream()
                 .map(k -> "?")
@@ -201,7 +216,7 @@ public class UnencryptedDataFetcher {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
             for (int i = 0; i < keys.size(); i++) {
-                stmt.setLong(i + 1, keys.get(i));
+                bindPkValue(stmt, i + 1, keys.get(i), pkColumnType);
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -214,5 +229,57 @@ public class UnencryptedDataFetcher {
         }
 
         return records;
+    }
+
+    /**
+     * PK 컬럼의 SQL 타입을 조회합니다.
+     */
+    private int getPkColumnType(Connection conn, String tableName, String pkColumn) {
+        try {
+            DatabaseMetaData metaData = conn.getMetaData();
+            try (ResultSet rs = metaData.getColumns(null, null, tableName, pkColumn)) {
+                if (rs.next()) {
+                    return rs.getInt("DATA_TYPE");
+                }
+            }
+        } catch (SQLException e) {
+            log.warn("Failed to get PK column type for {}.{}: {}", tableName, pkColumn, e.getMessage());
+        }
+        // 기본값: VARCHAR (문자열로 처리)
+        return Types.VARCHAR;
+    }
+
+    /**
+     * PK 컬럼 타입에 맞게 값을 변환하여 바인딩합니다.
+     */
+    private void bindPkValue(PreparedStatement stmt, int paramIndex, String value, int sqlType) throws SQLException {
+        switch (sqlType) {
+            case Types.BIGINT:
+            case Types.INTEGER:
+            case Types.SMALLINT:
+            case Types.TINYINT:
+                // 숫자 타입: Long으로 변환
+                try {
+                    stmt.setLong(paramIndex, Long.parseLong(value));
+                } catch (NumberFormatException e) {
+                    log.warn("Failed to parse '{}' as Long, using String", value);
+                    stmt.setString(paramIndex, value);
+                }
+                break;
+            case Types.NUMERIC:
+            case Types.DECIMAL:
+                // 정밀 숫자 타입: BigDecimal로 변환
+                try {
+                    stmt.setBigDecimal(paramIndex, new java.math.BigDecimal(value));
+                } catch (NumberFormatException e) {
+                    log.warn("Failed to parse '{}' as BigDecimal, using String", value);
+                    stmt.setString(paramIndex, value);
+                }
+                break;
+            default:
+                // VARCHAR, UUID, 기타: 문자열로 처리
+                stmt.setString(paramIndex, value);
+                break;
+        }
     }
 }

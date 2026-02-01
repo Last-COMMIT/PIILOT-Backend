@@ -45,11 +45,12 @@ public class StubAiServerClient implements AiServerClient {
             long totalRecords = 100L;
             long encRecords = 80L;
             // 실제 테스트 DB의 PK 값 범위에 맞춘 테스트 데이터
-            List<Long> unencKeys = List.of(
-                    2000000L, 2000001L, 2000002L, 2000003L, 2000004L,
-                    2000005L, 2000006L, 2000007L, 2000008L, 2000009L,
-                    2000010L, 2000011L, 2000012L, 2000013L, 2000014L,
-                    2000015L, 2000016L, 2000017L, 2000018L, 2000019L
+            // String 타입으로 변경하여 UUID/문자열 PK도 지원
+            List<String> unencKeys = List.of(
+                    "2000000", "2000001", "2000002", "2000003", "2000004",
+                    "2000005", "2000006", "2000007", "2000008", "2000009",
+                    "2000010", "2000011", "2000012", "2000013", "2000014",
+                    "2000015", "2000016", "2000017", "2000018", "2000019"
             );
 
             results.add(new EncryptionCheckResponseDTO.EncryptionResult(
