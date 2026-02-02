@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # WebDAV 서버
+  webdav:
+    image: bytemark/webdav
+    container_name: piilot-webdav
+    environment:
+      AUTH_TYPE: Basic
+      USERNAME: piilot
+      PASSWORD: piilot123
+    volumes:
+      - ./docker/webdav/data:/var/lib/dav/data
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+
+  # SFTP 서버
+  sftp:
+    image: atmoz/sftp
+    container_name: piilot-sftp
+    command: piilot:piilot123:1001
+    volumes:
+      - ./docker/sftp/data:/home/piilot/data
+    ports:
+      - "2222:22"
+    restart: unless-stopped
+
+  # FTP 서버
+  ftp:
+    image: fauria/vsftpd
+    container_name: piilot-ftp
+    environment:
+      FTP_USER: piilot
+      FTP_PASS: piilot123
+      PASV_ADDRESS: 127.0.0.1
+      PASV_MIN_PORT: 21000
+      PASV_MAX_PORT: 21010
+    volumes:
+      - ./docker/ftp/data:/home/vsftpd/piilot
+    ports:
+      - "21:21"
+      - "21000-21010:21000-21010"
+    restart: unless-stopped
