@@ -13,7 +13,8 @@ public record FileConnectionListResponseDTO(
         String host,
         Long totalFiles,
         Long totalFileSize,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Boolean isScanning
 ) {
     public static FileConnectionListResponseDTO of(FileServerConnection entity, Long totalFiles, Long totalFileSize) {
         return new FileConnectionListResponseDTO(
@@ -24,7 +25,8 @@ public record FileConnectionListResponseDTO(
                 entity.getHost() + ":" + entity.getPort(),
                 totalFiles,
                 totalFileSize,
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getIsScanning()
         );
     }
 }
