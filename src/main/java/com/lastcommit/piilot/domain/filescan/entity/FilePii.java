@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.shared.BaseEntity;
 import com.lastcommit.piilot.domain.shared.PiiType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,4 +32,16 @@ public class FilePii extends BaseEntity {
     @Column(name = "masked_piis_count")
     private Integer maskedPiisCount;
 
+    @Builder
+    private FilePii(PiiType piiType, File file, Integer totalPiisCount, Integer maskedPiisCount) {
+        this.piiType = piiType;
+        this.file = file;
+        this.totalPiisCount = totalPiisCount != null ? totalPiisCount : 0;
+        this.maskedPiisCount = maskedPiisCount != null ? maskedPiisCount : 0;
+    }
+
+    public void updatePiiCounts(Integer totalPiisCount, Integer maskedPiisCount) {
+        this.totalPiisCount = totalPiisCount;
+        this.maskedPiisCount = maskedPiisCount;
+    }
 }

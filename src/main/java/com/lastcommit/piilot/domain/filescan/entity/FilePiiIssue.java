@@ -5,6 +5,7 @@ import com.lastcommit.piilot.domain.shared.IssueStatus;
 import com.lastcommit.piilot.domain.shared.UserStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -41,4 +42,24 @@ public class FilePiiIssue extends BaseEntity {
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    @Builder
+    private FilePiiIssue(File file, FileServerConnection connection,
+                         UserStatus userStatus, IssueStatus issueStatus,
+                         LocalDateTime detectedAt) {
+        this.file = file;
+        this.connection = connection;
+        this.userStatus = userStatus;
+        this.issueStatus = issueStatus;
+        this.detectedAt = detectedAt;
+    }
+
+    public void resolve(LocalDateTime resolvedAt) {
+        this.issueStatus = IssueStatus.RESOLVED;
+        this.resolvedAt = resolvedAt;
+    }
+
+    public void updateUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
 }

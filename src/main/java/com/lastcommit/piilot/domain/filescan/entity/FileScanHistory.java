@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.shared.BaseEntity;
 import com.lastcommit.piilot.domain.shared.ScanStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -41,4 +42,30 @@ public class FileScanHistory extends BaseEntity {
 
     @Column(name = "scanned_files_count", nullable = false)
     private Long scannedFilesCount;
+
+    @Builder
+    private FileScanHistory(FileServerConnection fileServerConnection, ScanStatus status,
+                            LocalDateTime scanStartTime, Long totalFilesCount,
+                            Long totalFilesSize, Long scannedFilesCount) {
+        this.fileServerConnection = fileServerConnection;
+        this.status = status;
+        this.scanStartTime = scanStartTime;
+        this.totalFilesCount = totalFilesCount != null ? totalFilesCount : 0L;
+        this.totalFilesSize = totalFilesSize != null ? totalFilesSize : 0L;
+        this.scannedFilesCount = scannedFilesCount != null ? scannedFilesCount : 0L;
+    }
+
+    public void updateCompleted(LocalDateTime scanEndTime, Long totalFilesCount,
+                                 Long totalFilesSize, Long scannedFilesCount) {
+        this.status = ScanStatus.COMPLETED;
+        this.scanEndTime = scanEndTime;
+        this.totalFilesCount = totalFilesCount;
+        this.totalFilesSize = totalFilesSize;
+        this.scannedFilesCount = scannedFilesCount;
+    }
+
+    public void updateFailed(LocalDateTime scanEndTime) {
+        this.status = ScanStatus.FAILED;
+        this.scanEndTime = scanEndTime;
+    }
 }

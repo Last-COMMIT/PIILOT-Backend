@@ -59,6 +59,9 @@ public class FileServerConnection extends BaseEntity {
     @Column(name = "retention_period_months", nullable = false)
     private Integer retentionPeriodMonths;
 
+    @Column(name = "is_scanning", nullable = false)
+    private Boolean isScanning = false;
+
     @Builder
     private FileServerConnection(FileServerType serverType, User user, String connectionName,
                                   String host, Integer port, String defaultPath,
@@ -99,5 +102,13 @@ public class FileServerConnection extends BaseEntity {
 
     public void updateStatus(ConnectionStatus status) {
         this.status = status;
+    }
+
+    public void startScanning() {
+        this.isScanning = true;
+    }
+
+    public void stopScanning() {
+        this.isScanning = false;
     }
 }
