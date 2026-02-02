@@ -2,7 +2,6 @@ package com.lastcommit.piilot.domain.filescan.service;
 
 import com.lastcommit.piilot.domain.filescan.dto.request.FileScanAiRequestDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FileScanAiResponseDTO;
-import com.lastcommit.piilot.domain.filescan.entity.FileCategory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -22,24 +21,20 @@ public class StubFileAiServerClient implements FileAiServerClient {
 
         List<FileScanAiResponseDTO.FileResult> results = new ArrayList<>();
 
-        for (FileScanAiRequestDTO.PiiFile piiFile : request.piiFiles()) {
-            FileScanAiResponseDTO.FileResult result = scanSingleFile(piiFile);
+        for (String filePath : request.piiFiles()) {
+            FileScanAiResponseDTO.FileResult result = scanSingleFile(filePath);
             results.add(result);
         }
 
         return new FileScanAiResponseDTO(results);
     }
 
-    private FileScanAiResponseDTO.FileResult scanSingleFile(FileScanAiRequestDTO.PiiFile piiFile) {
-        log.debug("Stub AI scanning file: {}", piiFile.filePath());
-
-        // Skip encrypted files
-        if (Boolean.TRUE.equals(piiFile.isEncrypted())) {
-            return new FileScanAiResponseDTO.FileResult(piiFile.filePath(), false, List.of());
-        }
+    private FileScanAiResponseDTO.FileResult scanSingleFile(String filePath) {
+        log.debug("Stub AI scanning file: {}", filePath);
 
         List<FileScanAiResponseDTO.PiiDetail> piiDetails = new ArrayList<>();
-        String fileName = piiFile.fileName().toLowerCase();
+        String fileName = extractFileName(filePath).toLowerCase();
+        String extension = extractExtension(filePath).toLowerCase();
 
         // Simulate PII detection based on file name keywords
         if (fileName.contains("employee") || fileName.contains("staff") || fileName.contains("직원")) {
@@ -70,7 +65,7 @@ public class StubFileAiServerClient implements FileAiServerClient {
         }
 
         // Image files - simulate face detection
-        if (piiFile.fileCategory() == FileCategory.PHOTO) {
+        if (isImageExtension(extension)) {
             if (fileName.contains("profile") || fileName.contains("photo") ||
                 fileName.contains("사진") || fileName.contains("증명")) {
                 piiDetails.add(new FileScanAiResponseDTO.PiiDetail("FACE", 1, 0));
@@ -85,6 +80,21 @@ public class StubFileAiServerClient implements FileAiServerClient {
 
         boolean piiDetected = !piiDetails.isEmpty();
 
-        return new FileScanAiResponseDTO.FileResult(piiFile.filePath(), piiDetected, piiDetails);
+        return new FileScanAiResponseDTO.FileResult(filePath, piiDetected, piiDetails);
+    }
+
+    private String extractFileName(String filePath) {
+        int lastSlash = filePath.lastIndexOf('/');
+        return lastSlash >= 0 ? filePath.substring(lastSlash + 1) : filePath;
+    }
+
+    private String extractExtension(String filePath) {
+        int lastDot = filePath.lastIndexOf('.');
+        return lastDot >= 0 ? filePath.substring(lastDot + 1) : "";
+    }
+
+    private boolean isImageExtension(String extension) {
+        return extension.equals("jpg") || extension.equals("jpeg") ||
+               extension.equals("png") || extension.equals("heic");
     }
 }

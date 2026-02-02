@@ -20,7 +20,7 @@ import java.util.List;
 public class RealFileAiServerClient implements FileAiServerClient {
 
     private static final String SCAN_ENDPOINT = "/api/ai/file/scan";
-    private static final Duration TIMEOUT = Duration.ofMinutes(5);
+    private static final Duration TIMEOUT = Duration.ofMinutes(60);
 
     private final WebClient webClient;
 
@@ -34,26 +34,16 @@ public class RealFileAiServerClient implements FileAiServerClient {
         log.info("Sending batch scan request to AI server: {} files for connectionId={}",
                 request.piiFiles().size(), request.connectionId());
 
-        // Filter out encrypted files before sending
-        List<FileScanAiRequestDTO.PiiFile> filesToScan = request.piiFiles().stream()
-                .filter(file -> !Boolean.TRUE.equals(file.isEncrypted()))
-                .toList();
-
-        if (filesToScan.isEmpty()) {
-            log.info("No files to scan after filtering encrypted files");
+        if (request.piiFiles().isEmpty()) {
+            log.info("No files to scan");
             return new FileScanAiResponseDTO(List.of());
         }
-
-        FileScanAiRequestDTO filteredRequest = new FileScanAiRequestDTO(
-                request.connectionId(),
-                filesToScan
-        );
 
         try {
             FileScanAiResponseDTO response = webClient.post()
                     .uri(SCAN_ENDPOINT)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(filteredRequest)
+                    .bodyValue(request)
                     .retrieve()
                     .bodyToMono(FileScanAiResponseDTO.class)
                     .timeout(TIMEOUT)

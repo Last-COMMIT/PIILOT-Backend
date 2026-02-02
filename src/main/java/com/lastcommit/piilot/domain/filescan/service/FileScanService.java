@@ -163,20 +163,22 @@ public class FileScanService {
 
         // Step 3: AI batch scan
         log.info("Step 3: Running AI batch scan on {} files", filesToScan.size());
-        if (!filesToScan.isEmpty()) {
-            // Build batch request
-            List<FileScanAiRequestDTO.PiiFile> piiFiles = filesToScan.stream()
-                    .map(file -> new FileScanAiRequestDTO.PiiFile(
-                            file.getFilePath(),
-                            file.getName(),
-                            file.getFileType().getType(),
-                            file.getIsEncrypted()
-                    ))
+
+        // Filter out encrypted files - AI only scans non-encrypted files
+        List<File> nonEncryptedFiles = filesToScan.stream()
+                .filter(file -> !Boolean.TRUE.equals(file.getIsEncrypted()))
+                .toList();
+        log.info("Non-encrypted files to scan: {}", nonEncryptedFiles.size());
+
+        if (!nonEncryptedFiles.isEmpty()) {
+            // Build batch request - only file paths as per design document
+            List<String> piiFilePaths = nonEncryptedFiles.stream()
+                    .map(File::getFilePath)
                     .toList();
 
             FileScanAiRequestDTO batchRequest = new FileScanAiRequestDTO(
                     String.valueOf(connectionId),
-                    piiFiles
+                    piiFilePaths
             );
 
             // Call AI server
