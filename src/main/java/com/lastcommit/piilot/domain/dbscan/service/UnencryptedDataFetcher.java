@@ -33,11 +33,14 @@ public class UnencryptedDataFetcher {
             int limit
     ) {
         String rawKeys = piiColumn.getUnencRecordsKey();
-        log.debug("unenc_records_key for column '{}': {}", piiColumn.getName(), rawKeys);
+        // 민감 데이터 보호: PK 값은 로그에 노출하지 않고 길이만 기록
+        log.debug("unenc_records_key for column '{}': length={}", piiColumn.getName(),
+                rawKeys != null ? rawKeys.length() : 0);
 
         List<String> unencRecordKeys = parseUnencRecordKeys(rawKeys);
         if (unencRecordKeys.isEmpty()) {
-            log.warn("No unencrypted record keys found for column '{}'. Raw value: {}", piiColumn.getName(), rawKeys);
+            log.warn("No unencrypted record keys found for column '{}'. Key data length: {}",
+                    piiColumn.getName(), rawKeys != null ? rawKeys.length() : 0);
             return Collections.emptyList();
         }
 
