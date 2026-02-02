@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface DbServerConnectionRepository extends JpaRepository<DbServerConnection, Long> {
 
     boolean existsByConnectionNameAndUserId(String connectionName, Long userId);
@@ -15,4 +17,8 @@ public interface DbServerConnectionRepository extends JpaRepository<DbServerConn
     long countByUserId(Long userId);
 
     long countByUserIdAndStatus(Long userId, ConnectionStatus status);
+
+    List<DbServerConnection> findByStatus(ConnectionStatus status);
+
+    List<DbServerConnection> findByUserIdOrderByConnectionNameAsc(Long userId);
 }
