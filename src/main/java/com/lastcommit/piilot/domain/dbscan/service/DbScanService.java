@@ -52,7 +52,25 @@ public class DbScanService {
             throw new GeneralException(DbScanErrorStatus.CONNECTION_NOT_CONNECTED);
         }
 
-        // 2. ScanHistory 생성 (IN_PROGRESS)
+        // 2. 스캔 중복 체크
+        if (Boolean.TRUE.equals(connection.getIsScanning())) {
+            throw new GeneralException(DbScanErrorStatus.SCAN_ALREADY_IN_PROGRESS);
+        }
+
+        // 3. 스캔 시작 표시
+        connection.startScanning();
+
+        try {
+            return executeDbScan(connection);
+        } finally {
+            connection.stopScanning();
+        }
+    }
+
+    private DbScanResponseDTO executeDbScan(DbServerConnection connection) {
+        Long connectionId = connection.getId();
+
+        // 4. ScanHistory 생성 (IN_PROGRESS)
         DbScanHistory scanHistory = DbScanHistory.builder()
                 .dbServerConnection(connection)
                 .status(ScanStatus.IN_PROGRESS)
