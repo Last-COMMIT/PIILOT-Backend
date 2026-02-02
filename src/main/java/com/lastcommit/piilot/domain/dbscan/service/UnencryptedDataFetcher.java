@@ -71,7 +71,7 @@ public class UnencryptedDataFetcher {
                 return Collections.emptyList();
             }
 
-            List<UnencryptedRecordDTO> records = fetchRecords(conn, table.getName(), pkColumn, piiColumn.getName(), limitedKeys);
+            List<UnencryptedRecordDTO> records = fetchRecords(conn, dbmsType, table.getName(), pkColumn, piiColumn.getName(), limitedKeys);
             log.debug("Fetched {} unencrypted records for column '{}'", records.size(), piiColumn.getName());
             return records;
         } catch (SQLException e) {
@@ -189,6 +189,7 @@ public class UnencryptedDataFetcher {
      */
     private List<UnencryptedRecordDTO> fetchRecords(
             Connection conn,
+            DbmsType dbmsType,
             String tableName,
             String pkColumn,
             String piiColumn,
@@ -211,10 +212,11 @@ public class UnencryptedDataFetcher {
                 .map(k -> "?")
                 .collect(Collectors.joining(","));
 
-        // 식별자를 쌍따옴표로 감싸서 안전하게 처리 (SQL 표준)
+        // DBMS별 식별자 인용 문자: MySQL=백틱(`), PostgreSQL/Oracle=쌍따옴표(")
+        String q = getIdentifierQuote(dbmsType);
         String sql = String.format(
-                "SELECT \"%s\", \"%s\" FROM \"%s\" WHERE \"%s\" IN (%s)",
-                pkColumn, piiColumn, tableName, pkColumn, placeholders
+                "SELECT %s%s%s, %s%s%s FROM %s%s%s WHERE %s%s%s IN (%s)",
+                q, pkColumn, q, q, piiColumn, q, q, tableName, q, q, pkColumn, q, placeholders
         );
 
         List<UnencryptedRecordDTO> records = new ArrayList<>();
@@ -303,10 +305,23 @@ public class UnencryptedDataFetcher {
         }
 
         // 허용 패턴: 알파벳, 숫자, 언더스코어, 한글 (일부 DB는 한글 테이블명 허용)
-        // 쌍따옴표는 SQL에서 이스케이프되므로 허용하지 않음
+        // 인용 문자(", `)는 SQL에서 특별한 의미를 가지므로 허용하지 않음
         if (!identifier.matches("^[a-zA-Z0-9_가-힣]+$")) {
             log.error("Invalid SQL identifier detected: {} = '{}'", fieldName, identifier);
             throw new IllegalArgumentException("Invalid SQL identifier: " + fieldName);
         }
+    }
+
+    /**
+     * DBMS별 식별자 인용 문자를 반환합니다.
+     * - MySQL: 백틱(`)
+     * - PostgreSQL, Oracle: 쌍따옴표(")
+     */
+    private String getIdentifierQuote(DbmsType dbmsType) {
+        if (dbmsType != null && dbmsType.getName().toLowerCase().contains("mysql")) {
+            return "`";
+        }
+        // PostgreSQL, Oracle 등은 SQL 표준 쌍따옴표 사용
+        return "\"";
     }
 }
