@@ -72,7 +72,8 @@ public class RealRegulationSearchAiClient implements RegulationSearchAiClient {
                 throw new GeneralException(RegulationSearchErrorStatus.AI_SERVER_EMPTY_RESPONSE);
             }
 
-            log.info("AI 서버 법령/내규 검색 완료: {} 참고문서", response.sources().size());
+            int sourceCount = response.sources() != null ? response.sources().size() : 0;
+            log.info("AI 서버 법령/내규 검색 완료: {} 참고문서", sourceCount);
             return response;
 
         } catch (WebClientResponseException e) {
