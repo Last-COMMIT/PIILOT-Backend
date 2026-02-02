@@ -1,0 +1,73 @@
+package com.lastcommit.piilot.domain.filescan.dto.response;
+
+import com.lastcommit.piilot.domain.filescan.entity.File;
+import com.lastcommit.piilot.domain.filescan.entity.FilePii;
+import com.lastcommit.piilot.domain.filescan.entity.FilePiiIssue;
+import com.lastcommit.piilot.domain.filescan.entity.FileServerConnection;
+import com.lastcommit.piilot.domain.shared.IssueStatus;
+import com.lastcommit.piilot.domain.shared.RiskLevel;
+import com.lastcommit.piilot.domain.shared.UserStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record FilePiiIssueDetailResponseDTO(
+        Long issueId,
+        String connectionName,
+        String serverTypeName,
+        String fileName,
+        String filePath,
+        String fileCategory,
+        String fileCategoryName,
+        Integer totalPiiCount,
+        Integer maskedPiiCount,
+        Integer unmaskedPiiCount,
+        RiskLevel riskLevel,
+        UserStatus userStatus,
+        IssueStatus issueStatus,
+        LocalDateTime detectedAt,
+        String managerName,
+        String managerEmail,
+        List<FilePiiDetailDTO> piiDetails
+) {
+    public static FilePiiIssueDetailResponseDTO of(FilePiiIssue issue, List<FilePii> filePiis) {
+        File file = issue.getFile();
+        FileServerConnection connection = issue.getConnection();
+
+        // 총 PII 개수 계산
+        int totalPiiCount = filePiis.stream()
+                .mapToInt(pii -> pii.getTotalPiisCount() != null ? pii.getTotalPiisCount() : 0)
+                .sum();
+
+        // 마스킹된 PII 개수 계산
+        int maskedPiiCount = filePiis.stream()
+                .mapToInt(pii -> pii.getMaskedPiisCount() != null ? pii.getMaskedPiisCount() : 0)
+                .sum();
+
+        // PII 상세 정보 (미마스킹 개수가 0보다 큰 것만)
+        List<FilePiiDetailDTO> piiDetails = filePiis.stream()
+                .map(FilePiiDetailDTO::from)
+                .filter(dto -> dto.count() > 0)
+                .toList();
+
+        return new FilePiiIssueDetailResponseDTO(
+                issue.getId(),
+                connection.getConnectionName(),
+                connection.getServerType().getName(),
+                file.getName(),
+                file.getFilePath(),
+                file.getFileType().getType().name(),
+                file.getFileType().getType().getDisplayName(),
+                totalPiiCount,
+                maskedPiiCount,
+                totalPiiCount - maskedPiiCount,
+                file.getRiskLevel(),
+                issue.getUserStatus(),
+                issue.getIssueStatus(),
+                issue.getDetectedAt(),
+                connection.getManagerName(),
+                connection.getManagerEmail(),
+                piiDetails
+        );
+    }
+}
