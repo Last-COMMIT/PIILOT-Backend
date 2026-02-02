@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface FileServerConnectionRepository extends JpaRepository<FileServerConnection, Long> {
 
     boolean existsByConnectionNameAndUserId(String connectionName, Long userId);
@@ -15,4 +17,6 @@ public interface FileServerConnectionRepository extends JpaRepository<FileServer
     long countByUserId(Long userId);
 
     long countByUserIdAndStatus(Long userId, ConnectionStatus status);
+
+    List<FileServerConnection> findByStatus(ConnectionStatus status);
 }

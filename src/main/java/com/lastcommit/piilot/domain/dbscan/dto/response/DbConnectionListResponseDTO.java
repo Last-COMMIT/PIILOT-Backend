@@ -11,7 +11,8 @@ public record DbConnectionListResponseDTO(
         String host,
         String dbName,
         Long totalTables,
-        Long totalColumns
+        Long totalColumns,
+        Boolean isScanning
 ) {
     public static DbConnectionListResponseDTO of(DbServerConnection entity, Long totalTables, Long totalColumns) {
         return new DbConnectionListResponseDTO(
@@ -22,7 +23,8 @@ public record DbConnectionListResponseDTO(
                 entity.getHost() + ":" + entity.getPort(),
                 entity.getDbName(),
                 totalTables,
-                totalColumns
+                totalColumns,
+                entity.getIsScanning()
         );
     }
 }

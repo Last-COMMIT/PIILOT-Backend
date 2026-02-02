@@ -64,6 +64,20 @@ dependencies {
 
     // FTP (Apache Commons Net)
     implementation 'commons-net:commons-net:3.11.1'
+
+    // PDF encryption check (PDFBox)
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+
+    // Office file encryption check (Apache POI)
+    implementation 'org.apache.poi:poi:5.2.5'
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
+    // WebDAV client (Sardine)
+    implementation 'com.github.lookfirst:sardine:5.10'
+
+    // JAXB (Java 9+ 에서 Sardine 사용을 위해 필요 - javax 버전)
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.9'
 }
 
 tasks.named('test') {

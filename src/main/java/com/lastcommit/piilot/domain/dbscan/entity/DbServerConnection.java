@@ -56,6 +56,9 @@ public class DbServerConnection extends BaseEntity {
     @Column(nullable = false, length = 20)
     private ConnectionStatus status;
 
+    @Column(name = "is_scanning", nullable = false)
+    private Boolean isScanning = false;
+
     @Builder
     private DbServerConnection(User user, DbmsType dbmsType, String connectionName,
                                String host, Integer port, String dbName,
@@ -92,5 +95,13 @@ public class DbServerConnection extends BaseEntity {
 
     public void updateStatus(ConnectionStatus status) {
         this.status = status;
+    }
+
+    public void startScanning() {
+        this.isScanning = true;
+    }
+
+    public void stopScanning() {
+        this.isScanning = false;
     }
 }
