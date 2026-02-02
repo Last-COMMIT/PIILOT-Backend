@@ -109,4 +109,9 @@ public class File extends BaseEntity {
         }
         return this.lastModifiedTime.isAfter(this.lastScannedAt);
     }
+
+    public void markAsEncrypted() {
+        this.isEncrypted = true;
+        this.isIssueOpen = false;
+    }
 }

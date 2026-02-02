@@ -3,6 +3,7 @@ package com.lastcommit.piilot.domain.filescan.entity;
 import com.lastcommit.piilot.domain.shared.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,6 +36,14 @@ public class MaskingLog extends BaseEntity {
     @Column(name = "performed_at")
     private LocalDateTime performedAt;
 
-
-
+    @Builder
+    private MaskingLog(File file, FileServerConnection connection,
+                       String originalFilePath, String maskedFilePath,
+                       LocalDateTime performedAt) {
+        this.file = file;
+        this.connection = connection;
+        this.originalFilePath = originalFilePath;
+        this.maskedFilePath = maskedFilePath;
+        this.performedAt = performedAt != null ? performedAt : LocalDateTime.now();
+    }
 }
