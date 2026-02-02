@@ -30,7 +30,7 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class FileConnectionService {
 
-    private static final Set<String> SUPPORTED_SERVER_TYPES = Set.of("FTP", "SFTP");
+    private static final Set<String> SUPPORTED_SERVER_TYPES = Set.of("FTP", "SFTP", "WEBDAV");
 
     private final FileServerConnectionRepository connectionRepository;
     private final FileServerTypeRepository serverTypeRepository;
