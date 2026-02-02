@@ -281,7 +281,7 @@ public class DbScanService {
                 .ifPresent(issue -> issue.resolve(now));
     }
 
-    private String convertToJson(List<Long> keys) {
+    private String convertToJson(List<String> keys) {
         try {
             return objectMapper.writeValueAsString(keys);
         } catch (JsonProcessingException e) {

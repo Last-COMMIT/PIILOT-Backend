@@ -57,4 +57,8 @@ public class DbPiiIssue extends BaseEntity {
         this.issueStatus = IssueStatus.RESOLVED;
         this.resolvedAt = resolvedAt;
     }
+
+    public void updateUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
 }

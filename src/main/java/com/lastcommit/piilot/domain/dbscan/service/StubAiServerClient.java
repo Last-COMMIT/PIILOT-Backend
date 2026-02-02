@@ -44,8 +44,14 @@ public class StubAiServerClient implements AiServerClient {
         for (EncryptionCheckRequestDTO.PiiColumnInfo piiColumn : request.piiColumns()) {
             long totalRecords = 100L;
             long encRecords = 80L;
-            List<Long> unencKeys = List.of(1L, 5L, 23L, 42L, 57L, 68L, 73L, 81L, 90L, 95L,
-                    101L, 115L, 128L, 142L, 155L, 168L, 181L, 194L, 207L, 220L);
+            // 실제 테스트 DB의 PK 값 범위에 맞춘 테스트 데이터
+            // String 타입으로 변경하여 UUID/문자열 PK도 지원
+            List<String> unencKeys = List.of(
+                    "2000000", "2000001", "2000002", "2000003", "2000004",
+                    "2000005", "2000006", "2000007", "2000008", "2000009",
+                    "2000010", "2000011", "2000012", "2000013", "2000014",
+                    "2000015", "2000016", "2000017", "2000018", "2000019"
+            );
 
             results.add(new EncryptionCheckResponseDTO.EncryptionResult(
                     piiColumn.tableName(), piiColumn.columnName(), piiColumn.piiType(),

@@ -11,7 +11,7 @@ public record EncryptionCheckResponseDTO(
             String piiType,
             Long totalRecordsCount,
             Long encRecordsCount,
-            List<Long> unencRecordsKeys
+            List<String> unencRecordsKeys  // String으로 변경하여 UUID/문자열 PK 지원
     ) {
     }
 }
