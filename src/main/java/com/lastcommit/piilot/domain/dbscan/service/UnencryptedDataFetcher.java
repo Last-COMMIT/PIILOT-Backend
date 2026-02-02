@@ -198,6 +198,11 @@ public class UnencryptedDataFetcher {
             return Collections.emptyList();
         }
 
+        // SQL 인젝션 방지: 식별자 검증
+        validateIdentifier(tableName, "tableName");
+        validateIdentifier(pkColumn, "pkColumn");
+        validateIdentifier(piiColumn, "piiColumn");
+
         // PK 컬럼 타입 감지
         int pkColumnType = getPkColumnType(conn, tableName, pkColumn);
         log.debug("PK column '{}' type: {}", pkColumn, pkColumnType);
@@ -206,8 +211,9 @@ public class UnencryptedDataFetcher {
                 .map(k -> "?")
                 .collect(Collectors.joining(","));
 
+        // 식별자를 쌍따옴표로 감싸서 안전하게 처리 (SQL 표준)
         String sql = String.format(
-                "SELECT %s, %s FROM %s WHERE %s IN (%s)",
+                "SELECT \"%s\", \"%s\" FROM \"%s\" WHERE \"%s\" IN (%s)",
                 pkColumn, piiColumn, tableName, pkColumn, placeholders
         );
 
@@ -280,6 +286,27 @@ public class UnencryptedDataFetcher {
                 // VARCHAR, UUID, 기타: 문자열로 처리
                 stmt.setString(paramIndex, value);
                 break;
+        }
+    }
+
+    /**
+     * SQL 식별자(테이블명, 컬럼명)를 검증합니다.
+     * SQL 인젝션 방지를 위해 허용된 문자만 포함되어 있는지 확인합니다.
+     *
+     * @param identifier 검증할 식별자
+     * @param fieldName 로그용 필드명
+     * @throws IllegalArgumentException 유효하지 않은 식별자인 경우
+     */
+    private void validateIdentifier(String identifier, String fieldName) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " cannot be null or blank");
+        }
+
+        // 허용 패턴: 알파벳, 숫자, 언더스코어, 한글 (일부 DB는 한글 테이블명 허용)
+        // 쌍따옴표는 SQL에서 이스케이프되므로 허용하지 않음
+        if (!identifier.matches("^[a-zA-Z0-9_가-힣]+$")) {
+            log.error("Invalid SQL identifier detected: {} = '{}'", fieldName, identifier);
+            throw new IllegalArgumentException("Invalid SQL identifier: " + fieldName);
         }
     }
 }
