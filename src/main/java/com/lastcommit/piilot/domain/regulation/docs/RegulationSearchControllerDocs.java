@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.regulation.dto.request.RegulationSearchReque
 import com.lastcommit.piilot.domain.regulation.dto.response.RegulationSearchResponseDTO;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -20,7 +21,7 @@ public interface RegulationSearchControllerDocs {
             @ApiResponse(responseCode = "500", description = "AI 서버 오류")
     })
     CommonResponse<RegulationSearchResponseDTO> search(
-            Long userId,
+            @Parameter(hidden = true) Long userId,
             RegulationSearchRequestDTO request
     );
 }
