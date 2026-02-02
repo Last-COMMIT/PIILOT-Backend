@@ -100,8 +100,8 @@ public class FileConnectionTester {
                 fullUrl += "/";
             }
 
-            // 디렉토리 목록 조회로 연결 테스트
-            sardine.list(fullUrl);
+            // 디렉토리 목록 조회로 연결 테스트 (Depth: 1 명시)
+            sardine.list(fullUrl, 1);
             return true;
         } catch (Exception e) {
             return false;

@@ -253,7 +253,7 @@ public class FileSchemaScanner {
                 fullUrl += "/";
             }
 
-            List<DavResource> resources = sardine.list(fullUrl);
+            List<DavResource> resources = sardine.list(fullUrl, 1);  // Depth: 1 명시
 
             for (DavResource resource : resources) {
                 String resourcePath = resource.getPath();
