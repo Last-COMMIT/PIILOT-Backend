@@ -27,6 +27,4 @@ public interface FileServerConnectionRepository extends JpaRepository<FileServer
            "WHERE fc.user.id = :userId " +
            "ORDER BY fc.connectionName ASC")
     List<FileServerConnection> findByUserIdOrderByConnectionNameAsc(@Param("userId") Long userId);
-
-    List<FileServerConnection> findByUserIdOrderByConnectionNameAsc(Long userId);
 }
