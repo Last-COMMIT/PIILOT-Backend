@@ -2,6 +2,7 @@ package com.lastcommit.piilot.domain.filescan.service;
 
 import com.lastcommit.piilot.domain.filescan.dto.internal.FilePiiIssueStatsDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.*;
+import com.lastcommit.piilot.domain.filescan.entity.File;
 import com.lastcommit.piilot.domain.filescan.entity.FilePii;
 import com.lastcommit.piilot.domain.filescan.entity.FilePiiIssue;
 import com.lastcommit.piilot.domain.filescan.entity.FileServerConnection;
@@ -10,6 +11,7 @@ import com.lastcommit.piilot.domain.filescan.repository.FilePiiIssueRepository;
 import com.lastcommit.piilot.domain.filescan.repository.FilePiiRepository;
 import com.lastcommit.piilot.domain.shared.UserStatus;
 import com.lastcommit.piilot.global.error.exception.GeneralException;
+import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +29,31 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class FilePiiIssueService {
 
+    private static final long MAX_PREVIEW_SIZE = 20 * 1024 * 1024; // 20MB
+
+    private static final Map<String, String> MIME_TYPES = Map.ofEntries(
+            // PHOTO
+            Map.entry("jpg", "image/jpeg"),
+            Map.entry("jpeg", "image/jpeg"),
+            Map.entry("png", "image/png"),
+            Map.entry("heic", "image/heic"),
+            // DOCUMENT
+            Map.entry("pdf", "application/pdf"),
+            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            Map.entry("txt", "text/plain"),
+            // AUDIO
+            Map.entry("mp3", "audio/mpeg"),
+            Map.entry("wav", "audio/wav"),
+            // VIDEO
+            Map.entry("mp4", "video/mp4"),
+            Map.entry("avi", "video/x-msvideo"),
+            Map.entry("mov", "video/quicktime")
+    );
+
     private final FilePiiIssueRepository issueRepository;
     private final FilePiiRepository filePiiRepository;
+    private final FileDownloader fileDownloader;
+    private final AesEncryptor aesEncryptor;
 
     public FilePiiIssueListResponseDTO getIssueList(Long userId, Pageable pageable) {
         // 통계 계산
@@ -99,7 +124,50 @@ public class FilePiiIssueService {
         // 해당 파일의 FilePii 목록 조회
         List<FilePii> filePiis = filePiiRepository.findByFileIdWithPiiType(issue.getFile().getId());
 
-        return FilePiiIssueDetailResponseDTO.of(issue, filePiis);
+        // 파일 미리보기 처리
+        File file = issue.getFile();
+        FileServerConnection connection = issue.getConnection();
+        String extension = file.getFileType().getExtension();
+        String mimeType = getMimeType(extension);
+
+        // connection이 null인 경우 미리보기 불가
+        if (connection == null) {
+            return FilePiiIssueDetailResponseDTO.unavailable(
+                    issue, filePiis, extension, mimeType,
+                    "파일 서버 연결 정보가 없습니다."
+            );
+        }
+
+        // 파일 크기 체크
+        if (file.getFileSize() != null && file.getFileSize() >= MAX_PREVIEW_SIZE) {
+            return FilePiiIssueDetailResponseDTO.unavailable(
+                    issue, filePiis, extension, mimeType,
+                    "파일 크기가 20MB를 초과하여 미리보기를 지원하지 않습니다."
+            );
+        }
+
+        // 파일 다운로드 및 base64 인코딩
+        try {
+            String decryptedPassword = aesEncryptor.decrypt(connection.getEncryptedPassword());
+            byte[] fileContent = fileDownloader.download(connection, decryptedPassword, file.getFilePath());
+            String base64Content = Base64.getEncoder().encodeToString(fileContent);
+
+            return FilePiiIssueDetailResponseDTO.available(issue, filePiis, extension, mimeType, base64Content);
+        } catch (Exception e) {
+            log.error("Failed to download file for preview: issueId={}, filePath={}, error={}",
+                    issueId, file.getFilePath(), e.getMessage());
+            return FilePiiIssueDetailResponseDTO.unavailable(
+                    issue, filePiis, extension, mimeType,
+                    "파일 다운로드에 실패했습니다."
+            );
+        }
+    }
+
+    private String getMimeType(String extension) {
+        if (extension == null) {
+            return "application/octet-stream";
+        }
+        return MIME_TYPES.getOrDefault(extension.toLowerCase(), "application/octet-stream");
     }
 
     @Transactional

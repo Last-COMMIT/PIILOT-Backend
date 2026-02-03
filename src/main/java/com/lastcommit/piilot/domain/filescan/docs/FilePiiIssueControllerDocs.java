@@ -8,6 +8,7 @@ import com.lastcommit.piilot.global.error.response.CommonResponse;
 import com.lastcommit.piilot.global.validation.annotation.ValidPage;
 import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,6 +50,6 @@ public interface FilePiiIssueControllerDocs {
     CommonResponse<FilePiiIssueStatusUpdateResponseDTO> updateIssueStatus(
             @Parameter(hidden = true) Long userId,
             @Parameter(description = "이슈 ID") Long issueId,
-            FilePiiIssueStatusUpdateRequestDTO request
+            @Valid FilePiiIssueStatusUpdateRequestDTO request
     );
 }

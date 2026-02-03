@@ -7,7 +7,6 @@ import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueListRespon
 import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueStatusUpdateResponseDTO;
 import com.lastcommit.piilot.domain.filescan.service.FilePiiIssueService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -51,7 +50,7 @@ public class FilePiiIssueController implements FilePiiIssueControllerDocs {
     public CommonResponse<FilePiiIssueStatusUpdateResponseDTO> updateIssueStatus(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long issueId,
-            @Valid @RequestBody FilePiiIssueStatusUpdateRequestDTO request
+            @RequestBody FilePiiIssueStatusUpdateRequestDTO request
     ) {
         FilePiiIssueStatusUpdateResponseDTO result = filePiiIssueService.updateIssueStatus(
                 userId, issueId, request.userStatus()

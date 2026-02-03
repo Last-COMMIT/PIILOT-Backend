@@ -18,8 +18,13 @@ public record FilePiiIssueDetailResponseDTO(
         String serverTypeName,
         String fileName,
         String filePath,
+        String fileExtension,
         String fileCategory,
         String fileCategoryName,
+        String mimeType,
+        Boolean previewAvailable,
+        String fileContent,
+        String previewMessage,
         Integer totalPiiCount,
         Integer maskedPiiCount,
         Integer unmaskedPiiCount,
@@ -31,7 +36,35 @@ public record FilePiiIssueDetailResponseDTO(
         String managerEmail,
         List<FilePiiDetailDTO> piiDetails
 ) {
-    public static FilePiiIssueDetailResponseDTO of(FilePiiIssue issue, List<FilePii> filePiis) {
+    public static FilePiiIssueDetailResponseDTO available(
+            FilePiiIssue issue,
+            List<FilePii> filePiis,
+            String extension,
+            String mimeType,
+            String base64Content
+    ) {
+        return build(issue, filePiis, extension, mimeType, true, base64Content, null);
+    }
+
+    public static FilePiiIssueDetailResponseDTO unavailable(
+            FilePiiIssue issue,
+            List<FilePii> filePiis,
+            String extension,
+            String mimeType,
+            String message
+    ) {
+        return build(issue, filePiis, extension, mimeType, false, null, message);
+    }
+
+    private static FilePiiIssueDetailResponseDTO build(
+            FilePiiIssue issue,
+            List<FilePii> filePiis,
+            String extension,
+            String mimeType,
+            boolean previewAvailable,
+            String fileContent,
+            String previewMessage
+    ) {
         File file = issue.getFile();
         FileServerConnection connection = issue.getConnection();
         List<FilePii> safePiis = filePiis != null ? filePiis : Collections.emptyList();
@@ -58,8 +91,13 @@ public record FilePiiIssueDetailResponseDTO(
                 connection != null && connection.getServerType() != null ? connection.getServerType().getName() : null,
                 file.getName(),
                 file.getFilePath(),
-                file.getFileType().getType().name(),
+                extension,
+                extension != null ? extension.toUpperCase() : null,
                 file.getFileType().getType().getDisplayName(),
+                mimeType,
+                previewAvailable,
+                fileContent,
+                previewMessage,
                 totalPiiCount,
                 maskedPiiCount,
                 Math.max(0, totalPiiCount - maskedPiiCount),
