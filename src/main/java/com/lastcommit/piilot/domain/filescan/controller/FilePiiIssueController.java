@@ -7,8 +7,6 @@ import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueListRespon
 import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueStatusUpdateResponseDTO;
 import com.lastcommit.piilot.domain.filescan.service.FilePiiIssueService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
-import com.lastcommit.piilot.global.validation.annotation.ValidPage;
-import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +26,8 @@ public class FilePiiIssueController implements FilePiiIssueControllerDocs {
     @GetMapping
     public CommonResponse<FilePiiIssueListResponseDTO> getIssueList(
             @AuthenticationPrincipal Long userId,
-            @ValidPage @RequestParam(defaultValue = "0") int page,
-            @ValidSize @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         FilePiiIssueListResponseDTO result = filePiiIssueService.getIssueList(
                 userId,
