@@ -51,8 +51,8 @@ public class RealMaskingAiServerClient implements MaskingAiServerClient {
 
     @Override
     public MaskingAiResponseDTO maskFile(MaskingAiRequestDTO request) {
-        log.info("Calling AI server for file masking: connectionId={}, filePath={}, timeout={}s",
-                request.connectionId(), request.filePath(), timeoutSeconds);
+        log.info("Calling AI server for file masking: connectionId={}, fileCategory={}, timeout={}s",
+                request.connectionId(), request.fileCategory(), timeoutSeconds);
 
         try {
             MaskingAiResponseDTO response = webClient.post()
@@ -72,8 +72,7 @@ public class RealMaskingAiServerClient implements MaskingAiServerClient {
             return response;
 
         } catch (WebClientResponseException e) {
-            log.error("AI server returned error: status={}, body={}",
-                    e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("AI server returned error: status={}", e.getStatusCode());
             throw new GeneralException(FileMaskingErrorStatus.AI_SERVER_CONNECTION_FAILED);
         } catch (GeneralException e) {
             throw e;

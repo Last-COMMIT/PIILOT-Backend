@@ -41,6 +41,7 @@ public class FileMaskingService {
 
     private final FileServerConnectionRepository connectionRepository;
     private final FileRepository fileRepository;
+    private final FileTypeRepository fileTypeRepository;
     private final FilePiiRepository filePiiRepository;
     private final FilePiiIssueRepository filePiiIssueRepository;
     private final MaskingLogRepository maskingLogRepository;
@@ -180,17 +181,32 @@ public class FileMaskingService {
         String zipFilePath = changeExtensionToZip(originalFilePath);
         byte[] encryptedZip = createEncryptedZip(originalContent, file.getName(), request.encryptionPassword());
 
-        // 3. 원본 파일 삭제 및 ZIP 업로드
-        fileUploader.delete(connection, decryptedPassword, originalFilePath);
+        // 3. ZIP 파일 업로드 (원본 삭제 전에 먼저 업로드하여 데이터 유실 방지)
         fileUploader.upload(connection, decryptedPassword, zipFilePath, encryptedZip);
 
-        // 4. 마스킹 파일 업로드
+        // 4. 마스킹 파일 업로드 (실패 시 ZIP 파일 보상 삭제)
         byte[] maskedContent = Base64.getDecoder().decode(maskedContentBase64);
         String maskedFilePath = generateMaskedFilePath(originalFilePath);
-        fileUploader.upload(connection, decryptedPassword, maskedFilePath, maskedContent);
+        try {
+            fileUploader.upload(connection, decryptedPassword, maskedFilePath, maskedContent);
+        } catch (Exception e) {
+            // 보상 처리: 마스킹 파일 업로드 실패 시 이미 업로드된 ZIP 파일 삭제
+            log.error("Masked file upload failed, rolling back ZIP upload: {}", e.getMessage());
+            try {
+                fileUploader.delete(connection, decryptedPassword, zipFilePath);
+            } catch (Exception rollbackEx) {
+                log.error("Failed to rollback ZIP file: {}", rollbackEx.getMessage());
+            }
+            throw e;
+        }
 
-        // 5. DB 업데이트
-        file.markAsEncrypted();
+        // 5. 원본 파일 삭제 (모든 업로드 성공 후에만 삭제)
+        fileUploader.delete(connection, decryptedPassword, originalFilePath);
+
+        // 6. DB 업데이트 - 파일 경로 및 타입을 ZIP으로 변경
+        FileType zipFileType = fileTypeRepository.findByExtension("zip")
+                .orElseThrow(() -> new GeneralException(FileMaskingErrorStatus.FILE_UPLOAD_FAILED));
+        file.updateToEncryptedZip(zipFilePath, zipFileType);
 
         // FilePii 업데이트 - 모든 PII를 마스킹됨으로 처리
         List<FilePii> filePiis = filePiiRepository.findByFileId(fileId);
@@ -212,7 +228,7 @@ public class FileMaskingService {
                 .build();
         maskingLogRepository.save(maskingLog);
 
-        // 6. Redis 키 삭제
+        // 7. Redis 키 삭제
         redisTemplate.delete(redisKey);
         log.info("Masking saved and cache deleted: userId={}, fileId={}", userId, fileId);
 

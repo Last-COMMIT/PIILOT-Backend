@@ -20,7 +20,10 @@ import java.util.List;
 public class RealFileAiServerClient implements FileAiServerClient {
 
     private static final String SCAN_ENDPOINT = "/api/ai/file/scan";
-    private static final Duration TIMEOUT = Duration.ofMinutes(60);
+    // 파일 스캔은 @Async로 별도 스레드 풀에서 실행되므로 메인 요청 스레드에 영향 없음
+    // 여러 파일을 배치로 처리하므로 마스킹(5분)보다 긴 타임아웃 필요
+    // isScanning 플래그로 연결당 동시 스캔 1개로 제한되어 스레드 풀 고갈 위험 낮음
+    private static final Duration TIMEOUT = Duration.ofMinutes(30);
 
     private final WebClient webClient;
 

@@ -114,4 +114,23 @@ public class File extends BaseEntity {
         this.isEncrypted = true;
         this.isIssueOpen = false;
     }
+
+    /**
+     * 파일을 암호화된 ZIP으로 변환 시 경로와 타입을 업데이트합니다.
+     *
+     * @param zipFilePath ZIP 파일 경로
+     * @param zipFileType ZIP 파일 타입 (ARCHIVE)
+     */
+    public void updateToEncryptedZip(String zipFilePath, FileType zipFileType) {
+        this.filePath = zipFilePath;
+        this.name = extractFileName(zipFilePath);
+        this.fileType = zipFileType;
+        this.isEncrypted = true;
+        this.isIssueOpen = false;
+    }
+
+    private String extractFileName(String filePath) {
+        int lastSlash = filePath.lastIndexOf('/');
+        return lastSlash >= 0 ? filePath.substring(lastSlash + 1) : filePath;
+    }
 }
