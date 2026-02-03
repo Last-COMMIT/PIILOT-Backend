@@ -36,9 +36,14 @@ out/
 ### VS Code ###
 .vscode/
 
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
 ### application.yml profiles ###
 application-secret.yml
-application-dev.yml
 application-prod.yml
 
 ### Claude Code ###

@@ -15,4 +15,5 @@ public interface FilePiiRepository extends JpaRepository<FilePii, Long> {
 
     @Query("SELECT fp FROM FilePii fp JOIN FETCH fp.piiType WHERE fp.file.id = :fileId")
     List<FilePii> findByFileIdWithPiiType(@Param("fileId") Long fileId);
+    List<FilePii> findByFileIdIn(List<Long> fileIds);
 }
