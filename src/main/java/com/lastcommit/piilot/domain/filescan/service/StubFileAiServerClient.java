@@ -11,7 +11,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Profile("local")
+@Profile("stub")
 public class StubFileAiServerClient implements FileAiServerClient {
 
     @Override

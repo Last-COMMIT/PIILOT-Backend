@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@Profile("local")
+@Profile("stub")
 public class StubAiServerClient implements AiServerClient {
 
     private static final String[] STUB_PII_KEYWORDS = {"name", "email", "phone", "address", "ssn", "passport", "account"};

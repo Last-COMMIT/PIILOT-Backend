@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-@Profile("!local")
+@Profile("!stub")
 public class RealMaskingAiServerClient implements MaskingAiServerClient {
 
     @Value("${ai-server.base-url:http://localhost:8000}")
