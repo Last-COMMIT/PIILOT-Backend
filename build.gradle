@@ -78,6 +78,9 @@ dependencies {
     // JAXB (Java 9+ 에서 Sardine 사용을 위해 필요 - javax 버전)
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.9'
+
+    // ZIP file encryption (zip4j)
+    implementation 'net.lingala.zip4j:zip4j:2.11.5'
 }
 
 tasks.named('test') {

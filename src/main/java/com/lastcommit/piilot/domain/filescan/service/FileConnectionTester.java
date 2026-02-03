@@ -63,6 +63,7 @@ public class FileConnectionTester {
             JSch jsch = new JSch();
             session = jsch.getSession(username, host, port);
             session.setPassword(password);
+            // 내부구축형 시스템으로 신뢰할 수 있는 내부 네트워크에서만 운영됨
             session.setConfig("StrictHostKeyChecking", "no");
             session.setTimeout(CONNECTION_TIMEOUT_MS);
             session.connect(CONNECTION_TIMEOUT_MS);
@@ -100,8 +101,8 @@ public class FileConnectionTester {
                 fullUrl += "/";
             }
 
-            // 디렉토리 목록 조회로 연결 테스트
-            sardine.list(fullUrl);
+            // 디렉토리 목록 조회로 연결 테스트 (Depth: 1 명시)
+            sardine.list(fullUrl, 1);
             return true;
         } catch (Exception e) {
             return false;

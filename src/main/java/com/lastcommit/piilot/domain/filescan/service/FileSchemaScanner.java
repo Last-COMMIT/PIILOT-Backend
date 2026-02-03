@@ -62,6 +62,7 @@ public class FileSchemaScanner {
             JSch jsch = new JSch();
             session = jsch.getSession(connection.getUsername(), connection.getHost(), connection.getPort());
             session.setPassword(password);
+            // 내부구축형 시스템으로 신뢰할 수 있는 내부 네트워크에서만 운영됨
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect(CONNECTION_TIMEOUT);
 
@@ -253,7 +254,7 @@ public class FileSchemaScanner {
                 fullUrl += "/";
             }
 
-            List<DavResource> resources = sardine.list(fullUrl);
+            List<DavResource> resources = sardine.list(fullUrl, 1);  // Depth: 1 명시
 
             for (DavResource resource : resources) {
                 String resourcePath = resource.getPath();

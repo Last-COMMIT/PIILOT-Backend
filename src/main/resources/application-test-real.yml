@@ -32,7 +32,7 @@ encryption:
 
 # 실제 AI 서버 URL (ngrok)
 ai-server:
-  base-url: https://43a5532fe0f7.ngrok-free.app
+  base-url: https://b7fb674b05b4.ngrok-free.app
   timeout-seconds: 300
 
 logging:
