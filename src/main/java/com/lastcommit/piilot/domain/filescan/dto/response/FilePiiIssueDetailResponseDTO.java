@@ -54,8 +54,8 @@ public record FilePiiIssueDetailResponseDTO(
 
         return new FilePiiIssueDetailResponseDTO(
                 issue.getId(),
-                connection.getConnectionName(),
-                connection.getServerType().getName(),
+                connection != null ? connection.getConnectionName() : null,
+                connection != null && connection.getServerType() != null ? connection.getServerType().getName() : null,
                 file.getName(),
                 file.getFilePath(),
                 file.getFileType().getType().name(),
@@ -67,8 +67,8 @@ public record FilePiiIssueDetailResponseDTO(
                 issue.getUserStatus(),
                 issue.getIssueStatus(),
                 issue.getDetectedAt(),
-                connection.getManagerName(),
-                connection.getManagerEmail(),
+                connection != null ? connection.getManagerName() : null,
+                connection != null ? connection.getManagerEmail() : null,
                 piiDetails
         );
     }
