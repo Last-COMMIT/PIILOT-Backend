@@ -10,4 +10,6 @@ public interface FilePiiRepository extends JpaRepository<FilePii, Long> {
     List<FilePii> findByFileId(Long fileId);
 
     void deleteByFileId(Long fileId);
+
+    List<FilePii> findByFileIdIn(List<Long> fileIds);
 }
