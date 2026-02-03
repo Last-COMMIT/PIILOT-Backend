@@ -34,6 +34,7 @@ public class StubMaskingAiServerClient implements MaskingAiServerClient {
             case DOCUMENT -> "[STUB] Masked document - PII text replaced with ***";
             case AUDIO -> "[STUB] Masked audio - Beep sound applied to PII";
             case VIDEO -> "[STUB] Masked video - Face mosaic and beep applied";
+            case ARCHIVE -> "[STUB] Masked archive - encrypted zip";
         };
 
         return Base64.getEncoder().encodeToString(stubContent.getBytes());
