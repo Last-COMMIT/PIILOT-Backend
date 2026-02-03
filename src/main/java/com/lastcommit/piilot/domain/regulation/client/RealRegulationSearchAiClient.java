@@ -24,7 +24,7 @@ import java.time.Duration;
 
 @Slf4j
 @Component
-@Profile("!local")
+@Profile("!stub")
 @RequiredArgsConstructor
 public class RealRegulationSearchAiClient implements RegulationSearchAiClient {
 

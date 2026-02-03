@@ -1,0 +1,13 @@
+# Stub 프로필: AI 서버 없이 Stub 클라이언트로 테스트
+# 사용법: --spring.profiles.active=local,stub
+
+# AI 서버 설정 불필요 (Stub 클라이언트가 mock 응답 반환)
+
+logging:
+  level:
+    com.lastcommit.piilot: debug
+    # Stub 클라이언트 로그 확인용
+    com.lastcommit.piilot.domain.dbscan.service.StubAiServerClient: info
+    com.lastcommit.piilot.domain.filescan.service.StubFileAiServerClient: info
+    com.lastcommit.piilot.domain.filescan.service.StubMaskingAiServerClient: info
+    com.lastcommit.piilot.domain.regulation.client.StubRegulationSearchAiClient: info

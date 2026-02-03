@@ -11,7 +11,7 @@ import java.util.Base64;
 
 @Slf4j
 @Component
-@Profile("local")
+@Profile("stub")
 public class StubMaskingAiServerClient implements MaskingAiServerClient {
 
     @Override
