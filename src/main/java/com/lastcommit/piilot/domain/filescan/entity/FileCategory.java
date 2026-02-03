@@ -4,5 +4,14 @@ public enum FileCategory {
     DOCUMENT,  // 문서 (pdf, docx, xlsx 등)
     PHOTO,     // 사진 (jpg, png 등)
     AUDIO,     // 오디오 (mp3, wav 등)
-    VIDEO      // 비디오 (mp4, avi 등)
+    VIDEO;     // 비디오 (mp4, avi 등)
+
+    public String getDisplayName() {
+        return switch (this) {
+            case DOCUMENT -> "문서";
+            case PHOTO -> "사진";
+            case AUDIO -> "음성";
+            case VIDEO -> "영상";
+        };
+    }
 }
