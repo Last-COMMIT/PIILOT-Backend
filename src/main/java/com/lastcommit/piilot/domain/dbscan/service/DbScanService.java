@@ -69,8 +69,9 @@ public class DbScanService {
 
     private DbScanResponseDTO executeDbScan(DbServerConnection connection) {
         Long connectionId = connection.getId();
+        long totalStartTime = System.currentTimeMillis();
 
-        // 4. ScanHistory 생성 (IN_PROGRESS)
+        // ScanHistory 생성 (IN_PROGRESS)
         DbScanHistory scanHistory = DbScanHistory.builder()
                 .dbServerConnection(connection)
                 .status(ScanStatus.IN_PROGRESS)
@@ -81,7 +82,8 @@ public class DbScanService {
                 .build();
         scanHistory = dbScanHistoryRepository.save(scanHistory);
 
-        // 3. 1단계: 스키마 스캔
+        // ========== 1단계: 스키마 스캔 ==========
+        long stage1Start = System.currentTimeMillis();
         String decryptedPassword = aesEncryptor.decrypt(connection.getEncryptedPassword());
         List<SchemaTableInfoDTO> schemaInfos;
         try {
@@ -91,10 +93,12 @@ public class DbScanService {
             throw new GeneralException(DbScanErrorStatus.SCHEMA_SCAN_FAILED);
         }
 
-        // 4. 1단계 저장: db_tables 저장/갱신
+        // 1단계 저장: db_tables 저장/갱신 + 변경 테이블 필터링 (Phase 2)
         LocalDateTime now = LocalDateTime.now();
         long totalColumnsCount = 0L;
         Map<String, DbTable> tableMap = new HashMap<>();
+        List<SchemaTableInfoDTO> changedTables = new ArrayList<>();
+        Set<String> unchangedTableNames = new HashSet<>();
 
         for (SchemaTableInfoDTO schemaInfo : schemaInfos) {
             totalColumnsCount += schemaInfo.columnCount();
@@ -105,8 +109,19 @@ public class DbScanService {
             DbTable dbTable;
             if (existingTable.isPresent()) {
                 dbTable = existingTable.get();
+                String oldSignature = dbTable.getLastChangeSignature();
+                String newSignature = schemaInfo.changeSignature();
+
+                // 시그니처 비교로 변경 여부 판단
+                if (!Objects.equals(oldSignature, newSignature)) {
+                    changedTables.add(schemaInfo);
+                } else {
+                    unchangedTableNames.add(schemaInfo.tableName());
+                }
+
                 dbTable.updateScanInfo(schemaInfo.columnCount(), schemaInfo.changeSignature(), now);
             } else {
+                // 신규 테이블 → 스캔 대상
                 dbTable = DbTable.builder()
                         .dbServerConnection(connection)
                         .name(schemaInfo.tableName())
@@ -115,21 +130,14 @@ public class DbScanService {
                         .lastScannedAt(now)
                         .build();
                 dbTable = dbTableRepository.save(dbTable);
+                changedTables.add(schemaInfo);
             }
             tableMap.put(schemaInfo.tableName(), dbTable);
         }
+        int skippedCount = unchangedTableNames.size();
+        long stage1Duration = System.currentTimeMillis() - stage1Start;
 
-        // 5. 2단계: AI 서버에 PII 컬럼 식별 요청
-        PiiIdentificationRequestDTO piiRequest = buildPiiIdentificationRequest(schemaInfos);
-        PiiIdentificationResponseDTO piiResponse;
-        try {
-            piiResponse = aiServerClient.identifyPiiColumns(piiRequest);
-        } catch (Exception e) {
-            log.error("PII identification failed for connectionId={}: {}", connectionId, e.getMessage());
-            throw new GeneralException(DbScanErrorStatus.PII_IDENTIFICATION_FAILED);
-        }
-
-        // 6. 2단계 저장: db_pii_columns 병합
+        // ========== 기존 PII 컬럼 로드 (전체) ==========
         List<DbPiiColumn> existingPiiColumns = dbPiiColumnRepository.findByDbTableDbServerConnectionId(connectionId);
         Map<String, DbPiiColumn> existingPiiMap = existingPiiColumns.stream()
                 .collect(Collectors.toMap(
@@ -138,8 +146,38 @@ public class DbScanService {
                 ));
 
         Set<String> newPiiKeys = new HashSet<>();
-        List<DbPiiColumn> activePiiColumns = new ArrayList<>();
+        // LinkedHashSet으로 중복 방지 + 순서 유지
+        Set<DbPiiColumn> activePiiColumnsSet = new LinkedHashSet<>();
 
+        // 변경되지 않은 테이블의 기존 PII 컬럼은 유지 (Phase 2)
+        for (DbPiiColumn existingCol : existingPiiColumns) {
+            if (unchangedTableNames.contains(existingCol.getDbTable().getName())) {
+                String key = existingCol.getDbTable().getName() + ":" + existingCol.getName() + ":"
+                        + existingCol.getPiiType().getType().name();
+                newPiiKeys.add(key);
+                activePiiColumnsSet.add(existingCol);
+            }
+        }
+
+        // ========== 2단계: AI 서버에 PII 컬럼 식별 요청 (변경된 테이블만) ==========
+        long stage2Start = System.currentTimeMillis();
+        PiiIdentificationResponseDTO piiResponse;
+
+        if (changedTables.isEmpty()) {
+            // 변경된 테이블 없음 → AI 호출 스킵
+            piiResponse = new PiiIdentificationResponseDTO(Collections.emptyList());
+            log.info("[PERF] Stage 2 skipped: no changed tables");
+        } else {
+            PiiIdentificationRequestDTO piiRequest = buildPiiIdentificationRequest(changedTables);
+            try {
+                piiResponse = aiServerClient.identifyPiiColumns(piiRequest);
+            } catch (Exception e) {
+                log.error("PII identification failed for connectionId={}: {}", connectionId, e.getMessage());
+                throw new GeneralException(DbScanErrorStatus.PII_IDENTIFICATION_FAILED);
+            }
+        }
+
+        // 2단계 저장: 변경된 테이블의 db_pii_columns 병합
         for (PiiIdentificationResponseDTO.PiiColumnResult result : piiResponse.piiColumns()) {
             DbTable dbTable = tableMap.get(result.tableName());
             if (dbTable == null) continue;
@@ -157,7 +195,7 @@ public class DbScanService {
 
             DbPiiColumn existingCol = existingPiiMap.get(key);
             if (existingCol != null) {
-                activePiiColumns.add(existingCol);
+                activePiiColumnsSet.add(existingCol);
             } else {
                 PiiType piiType = piiTypeRepository.findByType(piiCategory)
                         .orElseThrow(() -> new GeneralException(DbScanErrorStatus.PII_TYPE_NOT_FOUND));
@@ -170,30 +208,57 @@ public class DbScanService {
                         .totalIssuesCount(0)
                         .build();
                 newCol = dbPiiColumnRepository.save(newCol);
-                activePiiColumns.add(newCol);
+                activePiiColumnsSet.add(newCol);
             }
         }
 
-        // 사라진 PII 컬럼 삭제 + 관련 ACTIVE 이슈 해결
+        // 사라진 PII 컬럼 삭제 + 관련 ACTIVE 이슈 해결 (변경된 테이블에서만)
+        Set<String> changedTableNames = changedTables.stream()
+                .map(SchemaTableInfoDTO::tableName)
+                .collect(Collectors.toSet());
+
+        List<Long> columnIdsToDelete = new ArrayList<>();
         for (Map.Entry<String, DbPiiColumn> entry : existingPiiMap.entrySet()) {
-            if (!newPiiKeys.contains(entry.getKey())) {
-                DbPiiColumn removedCol = entry.getValue();
-                resolveActiveIssue(removedCol, now);
-                dbPiiColumnRepository.delete(removedCol);
+            DbPiiColumn col = entry.getValue();
+            // 변경된 테이블의 PII 컬럼 중 새 스캔에서 발견되지 않은 것만 삭제
+            if (changedTableNames.contains(col.getDbTable().getName()) && !newPiiKeys.contains(entry.getKey())) {
+                resolveActiveIssue(col, now);
+                columnIdsToDelete.add(col.getId());
+                activePiiColumnsSet.remove(col);
             }
         }
 
-        // 7. 3단계: AI 서버에 암호화 확인 요청
-        EncryptionCheckRequestDTO encRequest = buildEncryptionCheckRequest(connectionId, piiResponse);
-        EncryptionCheckResponseDTO encResponse;
-        try {
-            encResponse = aiServerClient.checkEncryption(encRequest);
-        } catch (Exception e) {
-            log.error("Encryption check failed for connectionId={}: {}", connectionId, e.getMessage());
-            throw new GeneralException(DbScanErrorStatus.ENCRYPTION_CHECK_FAILED);
+        // ID 기반으로 삭제 (영속성 컨텍스트 문제 회피)
+        if (!columnIdsToDelete.isEmpty()) {
+            dbPiiColumnRepository.deleteAllById(columnIdsToDelete);
         }
 
-        // 8. 3단계 저장: db_pii_columns 암호화 결과 업데이트
+        // Set을 List로 변환 (이후 처리용)
+        List<DbPiiColumn> activePiiColumns = new ArrayList<>(activePiiColumnsSet);
+        long stage2Duration = System.currentTimeMillis() - stage2Start;
+
+        // ========== 3단계: AI 서버에 암호화 확인 요청 (변경된 테이블의 PII만) ==========
+        long stage3Start = System.currentTimeMillis();
+        EncryptionCheckResponseDTO encResponse;
+
+        // 변경된 테이블에서 발견된 PII 컬럼만 필터링
+        List<PiiIdentificationResponseDTO.PiiColumnResult> changedPiiColumns = piiResponse.piiColumns();
+
+        if (changedPiiColumns.isEmpty()) {
+            // 변경된 테이블에 PII 없음 → AI 호출 스킵
+            encResponse = new EncryptionCheckResponseDTO(Collections.emptyList());
+            log.info("[PERF] Stage 3 skipped: no PII columns in changed tables");
+        } else {
+            EncryptionCheckRequestDTO encRequest = buildEncryptionCheckRequest(connectionId, piiResponse);
+            try {
+                encResponse = aiServerClient.checkEncryption(encRequest);
+            } catch (Exception e) {
+                log.error("Encryption check failed for connectionId={}: {}", connectionId, e.getMessage());
+                throw new GeneralException(DbScanErrorStatus.ENCRYPTION_CHECK_FAILED);
+            }
+        }
+
+        // 3단계 저장: db_pii_columns 암호화 결과 업데이트
         Map<String, EncryptionCheckResponseDTO.EncryptionResult> encResultMap = encResponse.results().stream()
                 .collect(Collectors.toMap(
                         r -> r.tableName() + ":" + r.columnName() + ":" + r.piiType(),
@@ -214,8 +279,10 @@ public class DbScanService {
                 );
             }
         }
+        long stage3Duration = System.currentTimeMillis() - stage3Start;
 
-        // 9. 4단계: risk_level 계산 + ScanHistory 완료
+        // ========== 4단계: 후처리 (risk_level 계산) ==========
+        long stage4Start = System.currentTimeMillis();
         long scannedColumnsCount = 0L;
         for (DbPiiColumn piiColumn : activePiiColumns) {
             RiskLevel riskLevel = calculateRiskLevel(piiColumn);
@@ -225,13 +292,48 @@ public class DbScanService {
 
         scanHistory.updateCompleted(LocalDateTime.now(), ScanStatus.COMPLETED,
                 (long) schemaInfos.size(), totalColumnsCount, scannedColumnsCount);
+        long stage4Duration = System.currentTimeMillis() - stage4Start;
 
-        // 10. 5단계: 이슈 생성/해결
+        // ========== 5단계: 이슈 생성/해결 ==========
+        long stage5Start = System.currentTimeMillis();
+        int issueCount = 0;
         for (DbPiiColumn piiColumn : activePiiColumns) {
-            processIssue(piiColumn, connection, now);
+            if (processIssue(piiColumn, connection, now)) {
+                issueCount++;
+            }
         }
+        long stage5Duration = System.currentTimeMillis() - stage5Start;
+
+        // ========== 성능 측정 로그 출력 (Phase 2) ==========
+        long totalDuration = System.currentTimeMillis() - totalStartTime;
+        logPerformanceMetricsPhase2(connectionId, schemaInfos.size(), changedTables.size(), skippedCount,
+                totalColumnsCount, activePiiColumns.size(), issueCount,
+                stage1Duration, stage2Duration, stage3Duration, stage4Duration, stage5Duration,
+                totalDuration);
 
         return DbScanResponseDTO.from(scanHistory);
+    }
+
+    private void logPerformanceMetricsPhase2(Long connectionId, int tableCount, int changedCount, int skippedCount,
+                                              long columnCount, int piiColumnCount, int issueCount,
+                                              long stage1, long stage2, long stage3, long stage4, long stage5,
+                                              long total) {
+        log.info("========== DB SCAN PERFORMANCE (Phase 2: Sync + Incremental Scan) ==========");
+        log.info("[PERF] connectionId={}", connectionId);
+        log.info("[PERF] tables={}, changedTables={}, skippedTables={}", tableCount, changedCount, skippedCount);
+        log.info("[PERF] columns={}, piiColumns={}, issues={}", columnCount, piiColumnCount, issueCount);
+        log.info("[PERF] Stage 1 (Schema Scan + Filter): {} ms ({}%)",
+                String.format("%6d", stage1), String.format("%5.1f", stage1 * 100.0 / total));
+        log.info("[PERF] Stage 2 (PII Identification)  : {} ms ({}%)",
+                String.format("%6d", stage2), String.format("%5.1f", stage2 * 100.0 / total));
+        log.info("[PERF] Stage 3 (Encryption Check)    : {} ms ({}%)",
+                String.format("%6d", stage3), String.format("%5.1f", stage3 * 100.0 / total));
+        log.info("[PERF] Stage 4 (Post Processing)     : {} ms ({}%)",
+                String.format("%6d", stage4), String.format("%5.1f", stage4 * 100.0 / total));
+        log.info("[PERF] Stage 5 (Issue Processing)    : {} ms ({}%)",
+                String.format("%6d", stage5), String.format("%5.1f", stage5 * 100.0 / total));
+        log.info("[PERF] TOTAL                         : {} ms (100.0%)", String.format("%6d", total));
+        log.info("==========================================================================");
     }
 
     private PiiIdentificationRequestDTO buildPiiIdentificationRequest(List<SchemaTableInfoDTO> schemaInfos) {
@@ -267,7 +369,7 @@ public class DbScanService {
         return RiskLevel.LOW;
     }
 
-    private void processIssue(DbPiiColumn piiColumn, DbServerConnection connection, LocalDateTime now) {
+    private boolean processIssue(DbPiiColumn piiColumn, DbServerConnection connection, LocalDateTime now) {
         Long totalRecords = piiColumn.getTotalRecordsCount();
         Long encRecords = piiColumn.getEncRecordsCount();
 
@@ -287,11 +389,13 @@ public class DbScanService {
                     .build();
             dbPiiIssueRepository.save(issue);
             piiColumn.incrementIssueCount();
+            return true;
         } else if (isFullyEncrypted && Boolean.TRUE.equals(piiColumn.getIsIssueOpen())) {
             // 완전 암호화 + 이슈 오픈 → 기존 ACTIVE 이슈 해결
             resolveActiveIssue(piiColumn, now);
             piiColumn.closeIssue();
         }
+        return false;
     }
 
     private void resolveActiveIssue(DbPiiColumn piiColumn, LocalDateTime now) {
