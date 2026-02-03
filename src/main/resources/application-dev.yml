@@ -1,0 +1,59 @@
+# ===========================================
+# 개발/운영 환경 설정 (dev/prod 공용)
+# ===========================================
+# 배포 시 아래 환경변수를 설정해야 합니다:
+#   - DB_URL: jdbc:postgresql://host:port/database
+#   - DB_USERNAME: 데이터베이스 사용자명
+#   - DB_PASSWORD: 데이터베이스 비밀번호
+#   - REDIS_HOST: Redis 호스트
+#   - REDIS_PORT: Redis 포트 (기본값: 6379)
+#   - AES_KEY: AES-256 암호화 키 (정확히 32바이트)
+#   - AI_SERVER_URL: AI 서버 URL
+#   - CORS_ORIGINS: 허용할 프론트엔드 출처 (쉼표 구분)
+# ===========================================
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  docker:
+    compose:
+      enabled: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
+encryption:
+  aes-key: ${AES_KEY}
+
+ai-server:
+  base-url: ${AI_SERVER_URL}
+  timeout-seconds: 1800
+
+# CORS 설정 (배포 환경)
+# 예시: CORS_ORIGINS=https://piilot.com,https://www.piilot.com
+cors:
+  allowed-origins: ${CORS_ORIGINS:}
+
+logging:
+  level:
+    com.lastcommit.piilot: info
+    org.hibernate.SQL: warn
