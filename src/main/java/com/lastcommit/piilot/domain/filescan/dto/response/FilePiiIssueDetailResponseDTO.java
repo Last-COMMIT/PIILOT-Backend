@@ -9,6 +9,7 @@ import com.lastcommit.piilot.domain.shared.RiskLevel;
 import com.lastcommit.piilot.domain.shared.UserStatus;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 public record FilePiiIssueDetailResponseDTO(
@@ -33,19 +34,20 @@ public record FilePiiIssueDetailResponseDTO(
     public static FilePiiIssueDetailResponseDTO of(FilePiiIssue issue, List<FilePii> filePiis) {
         File file = issue.getFile();
         FileServerConnection connection = issue.getConnection();
+        List<FilePii> safePiis = filePiis != null ? filePiis : Collections.emptyList();
 
         // 총 PII 개수 계산
-        int totalPiiCount = filePiis.stream()
+        int totalPiiCount = safePiis.stream()
                 .mapToInt(pii -> pii.getTotalPiisCount() != null ? pii.getTotalPiisCount() : 0)
                 .sum();
 
         // 마스킹된 PII 개수 계산
-        int maskedPiiCount = filePiis.stream()
+        int maskedPiiCount = safePiis.stream()
                 .mapToInt(pii -> pii.getMaskedPiisCount() != null ? pii.getMaskedPiisCount() : 0)
                 .sum();
 
         // PII 상세 정보 (미마스킹 개수가 0보다 큰 것만)
-        List<FilePiiDetailDTO> piiDetails = filePiis.stream()
+        List<FilePiiDetailDTO> piiDetails = safePiis.stream()
                 .map(FilePiiDetailDTO::from)
                 .filter(dto -> dto.count() > 0)
                 .toList();
@@ -60,7 +62,7 @@ public record FilePiiIssueDetailResponseDTO(
                 file.getFileType().getType().getDisplayName(),
                 totalPiiCount,
                 maskedPiiCount,
-                totalPiiCount - maskedPiiCount,
+                Math.max(0, totalPiiCount - maskedPiiCount),
                 file.getRiskLevel(),
                 issue.getUserStatus(),
                 issue.getIssueStatus(),
