@@ -95,7 +95,10 @@ public class FileDownloader {
                 while ((len = is.read(buffer)) != -1) {
                     baos.write(buffer, 0, len);
                 }
-                ftpClient.completePendingCommand();
+                if (!ftpClient.completePendingCommand()) {
+                    log.error("FTP transfer failed: server returned error response");
+                    throw new GeneralException(FileMaskingErrorStatus.FILE_DOWNLOAD_FAILED);
+                }
                 return baos.toByteArray();
             }
 
