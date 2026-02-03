@@ -5,6 +5,8 @@ import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueDetailResp
 import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueListResponseDTO;
 import com.lastcommit.piilot.domain.filescan.dto.response.FilePiiIssueStatusUpdateResponseDTO;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
+import com.lastcommit.piilot.global.validation.annotation.ValidPage;
+import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,8 +24,8 @@ public interface FilePiiIssueControllerDocs {
     })
     CommonResponse<FilePiiIssueListResponseDTO> getIssueList(
             @Parameter(hidden = true) Long userId,
-            @Parameter(description = "페이지 번호 (0부터 시작)") int page,
-            @Parameter(description = "페이지 크기 (서버 그룹 단위)") int size
+            @ValidPage @Parameter(description = "페이지 번호 (0부터 시작)") int page,
+            @ValidSize @Parameter(description = "페이지 크기 (서버 그룹 단위)") int size
     );
 
     @Operation(summary = "이슈 상세 조회", description = "파일 개인정보 이슈의 상세 정보와 개인정보 유형별 개수를 조회합니다.")
