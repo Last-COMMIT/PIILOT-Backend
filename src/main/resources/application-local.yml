@@ -30,6 +30,12 @@ ai-server:
   base-url: http://localhost:8000
   timeout-seconds: 1800  # AI 서버는 LLM 처리로 시간이 오래 걸릴 수 있음
 
+# CORS 설정 (로컬 환경)
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+
 logging:
   level:
     com.lastcommit.piilot: debug
