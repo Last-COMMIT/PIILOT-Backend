@@ -26,4 +26,17 @@ public interface FileRepository extends JpaRepository<File, Long>, FileRepositor
     List<String> findFilePathsByConnectionId(@Param("connectionId") Long connectionId);
 
     List<File> findByConnectionId(Long connectionId);
+
+    // Dashboard: 개인정보 포함 파일 수 (hasPersonalInfo = true)
+    @Query("SELECT COUNT(f) FROM File f " +
+            "WHERE f.connection.user.id = :userId " +
+            "AND f.hasPersonalInfo = true")
+    long countPiiFilesByUserId(@Param("userId") Long userId);
+
+    // Dashboard: 암호화된 개인정보 포함 파일 수
+    @Query("SELECT COUNT(f) FROM File f " +
+            "WHERE f.connection.user.id = :userId " +
+            "AND f.hasPersonalInfo = true " +
+            "AND f.isEncrypted = true")
+    long countEncryptedPiiFilesByUserId(@Param("userId") Long userId);
 }
