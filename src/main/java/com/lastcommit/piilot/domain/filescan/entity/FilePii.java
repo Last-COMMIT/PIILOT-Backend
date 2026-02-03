@@ -44,4 +44,8 @@ public class FilePii extends BaseEntity {
         this.totalPiisCount = totalPiisCount;
         this.maskedPiisCount = maskedPiisCount;
     }
+
+    public void markAllAsMasked() {
+        this.maskedPiisCount = this.totalPiisCount;
+    }
 }

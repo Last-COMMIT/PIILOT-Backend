@@ -19,4 +19,6 @@ public interface FileServerConnectionRepository extends JpaRepository<FileServer
     long countByUserIdAndStatus(Long userId, ConnectionStatus status);
 
     List<FileServerConnection> findByStatus(ConnectionStatus status);
+
+    List<FileServerConnection> findByUserIdOrderByConnectionNameAsc(Long userId);
 }
