@@ -4,6 +4,7 @@ import com.lastcommit.piilot.domain.shared.BaseEntity;
 import com.lastcommit.piilot.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,4 +30,12 @@ public class Document extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String url;
+
+    @Builder
+    private Document(User user, String title, DocumentType type, String url) {
+        this.user = user;
+        this.title = title;
+        this.type = type;
+        this.url = url;
+    }
 }
