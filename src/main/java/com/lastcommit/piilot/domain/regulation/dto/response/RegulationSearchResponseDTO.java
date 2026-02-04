@@ -13,6 +13,7 @@ public record RegulationSearchResponseDTO(
                 ? aiResponse.sources().stream()
                         .map(ref -> new ReferenceDocumentDTO(
                                 ref.documentTitle(),
+                                ref.lawName(),
                                 ref.content(),
                                 ref.article(),
                                 ref.page(),
