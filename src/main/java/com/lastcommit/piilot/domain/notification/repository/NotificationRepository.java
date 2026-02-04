@@ -14,9 +14,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     /**
      * 사용자의 모든 알림 조회 (최신순, 페이지네이션)
-     * N+1 방지: JOIN FETCH로 User를 함께 로드
      */
-    @Query("SELECT n FROM Notification n JOIN FETCH n.user " +
+    @Query("SELECT n FROM Notification n " +
            "WHERE n.user.id = :userId " +
            "ORDER BY n.issuedAt DESC")
     Slice<Notification> findByUserIdOrderByIssuedAtDesc(
@@ -28,7 +27,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * 사용자의 읽지 않은 알림 조회 (최신순, 제한)
      * 헤더 드롭다운용 - 최대 3개
      */
-    @Query("SELECT n FROM Notification n JOIN FETCH n.user " +
+    @Query("SELECT n FROM Notification n " +
            "WHERE n.user.id = :userId AND n.isRead = false " +
            "ORDER BY n.issuedAt DESC")
     List<Notification> findUnreadByUserIdOrderByIssuedAtDesc(
@@ -37,7 +36,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     );
 
     /**
-     * 알림 ID로 조회 (User와 함께)
+     * 알림 ID로 조회 (소유자 검증용 - User 정보 포함)
      */
     @Query("SELECT n FROM Notification n JOIN FETCH n.user " +
            "WHERE n.id = :notificationId")
