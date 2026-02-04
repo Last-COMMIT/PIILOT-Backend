@@ -28,7 +28,7 @@ public record DbPiiIssueResponseDTO(
                 column.getName(),
                 column.getPiiType().getType().getDisplayName(),
                 column.getPiiType().getType().name(),
-                total - enc,
+                Math.max(0, total - enc),
                 total,
                 column.getRiskLevel(),
                 issue.getUserStatus(),
