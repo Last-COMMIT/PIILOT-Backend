@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -63,8 +65,15 @@ public class DocumentService {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new GeneralException(DocumentErrorStatus.DOCUMENT_NOT_FOUND));
 
-        documentFileStorage.delete(document.getUrl());
+        String storedUrl = document.getUrl();
         documentRepository.delete(document);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                documentFileStorage.delete(storedUrl);
+            }
+        });
     }
 
     private void validateFile(MultipartFile file) {
