@@ -207,7 +207,9 @@ public class DbScanService {
                         .isIssueOpen(false)
                         .totalIssuesCount(0)
                         .build();
-                newCol = dbPiiColumnRepository.save(newCol);
+                // newCol = dbPiiColumnRepository.save(newCol);
+                // saveAndFlush로 즉시 영속화하여 이후 DbPiiIssue 생성 시 참조 문제 방지
+                newCol = dbPiiColumnRepository.saveAndFlush(newCol);
                 activePiiColumnsSet.add(newCol);
             }
         }
@@ -228,9 +230,14 @@ public class DbScanService {
             }
         }
 
-        // ID 기반으로 삭제 (영속성 컨텍스트 문제 회피)
+        // // ID 기반으로 삭제 (영속성 컨텍스트 문제 회피)
+        // if (!columnIdsToDelete.isEmpty()) {
+        //     dbPiiColumnRepository.deleteAllById(columnIdsToDelete);
+        // }
+        
+        // 에러 발생하여 대체하여 수행하도록 함
         if (!columnIdsToDelete.isEmpty()) {
-            dbPiiColumnRepository.deleteAllById(columnIdsToDelete);
+            dbPiiColumnRepository.deleteAllByIdInBatch(columnIdsToDelete);
         }
 
         // Set을 List로 변환 (이후 처리용)

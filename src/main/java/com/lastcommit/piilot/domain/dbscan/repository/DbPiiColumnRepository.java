@@ -1,5 +1,6 @@
 package com.lastcommit.piilot.domain.dbscan.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
 import com.lastcommit.piilot.domain.dbscan.entity.DbPiiColumn;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,9 @@ public interface DbPiiColumnRepository extends JpaRepository<DbPiiColumn, Long>,
             "WHERE c.dbTable.dbServerConnection.user.id = :userId " +
             "GROUP BY c.piiType.type")
     List<Object[]> getPiiDistributionByUserId(@Param("userId") Long userId);
+    
+    // 벌크 삭제: ID 목록으로 삭제 (영속성 컨텍스트 우회)
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM DbPiiColumn c WHERE c.id IN :ids")
+    void deleteAllByIdInBatch(@Param("ids") List<Long> ids);
 }
