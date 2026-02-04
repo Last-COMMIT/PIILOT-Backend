@@ -63,7 +63,7 @@ public class Notification extends BaseEntity {
         this.entityType = entityType;
         this.entityId = entityId;
         this.isRead = isRead != null ? isRead : false;
-        this.issuedAt = issuedAt;
+        this.issuedAt = issuedAt != null ? issuedAt : LocalDateTime.now();
     }
 
     public void markAsRead(LocalDateTime readAt) {
