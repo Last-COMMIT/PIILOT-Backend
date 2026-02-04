@@ -11,6 +11,9 @@ import java.util.Optional;
 
 public interface DbPiiIssueRepository extends JpaRepository<DbPiiIssue, Long>, DbPiiIssueCustomRepository {
 
+    // Cascade delete: 특정 connection의 모든 이슈 삭제
+    void deleteByConnectionId(Long connectionId);
+
     Optional<DbPiiIssue> findByDbPiiColumnIdAndIssueStatus(Long columnId, IssueStatus issueStatus);
 
     // Dashboard: 사용자의 활성 이슈 수

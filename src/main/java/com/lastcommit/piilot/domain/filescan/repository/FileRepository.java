@@ -27,6 +27,9 @@ public interface FileRepository extends JpaRepository<File, Long>, FileRepositor
 
     List<File> findByConnectionId(Long connectionId);
 
+    // Cascade delete: 특정 connection의 모든 파일 삭제
+    void deleteByConnectionId(Long connectionId);
+
     // Dashboard: 개인정보 포함 파일 수 (hasPersonalInfo = true)
     @Query("SELECT COUNT(f) FROM File f " +
             "WHERE f.connection.user.id = :userId " +

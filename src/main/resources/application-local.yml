@@ -8,7 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # Flyway가 테이블 만들고, JPA는 엔티티와 실제 테이블 구조가 일치하는지 검증
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -39,5 +39,5 @@ cors:
 logging:
   level:
     com.lastcommit.piilot: debug
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+    org.hibernate.SQL: off
+    org.hibernate.orm.jdbc.bind: off

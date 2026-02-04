@@ -15,6 +15,9 @@ public interface FilePiiIssueRepository extends JpaRepository<FilePiiIssue, Long
 
     void deleteByFileId(Long fileId);
 
+    // Cascade delete: 특정 connection의 모든 이슈 삭제
+    void deleteByConnectionId(Long connectionId);
+
     @Query("SELECT i FROM FilePiiIssue i " +
             "JOIN FETCH i.file f " +
             "JOIN FETCH i.connection c " +

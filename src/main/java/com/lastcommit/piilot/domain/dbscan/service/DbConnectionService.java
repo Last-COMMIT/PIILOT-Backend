@@ -8,6 +8,9 @@ import com.lastcommit.piilot.domain.dbscan.dto.response.DbConnectionStatsRespons
 import com.lastcommit.piilot.domain.dbscan.entity.DbServerConnection;
 import com.lastcommit.piilot.domain.dbscan.entity.DbmsType;
 import com.lastcommit.piilot.domain.dbscan.exception.DbConnectionErrorStatus;
+import com.lastcommit.piilot.domain.dbscan.repository.DbPiiColumnRepository;
+import com.lastcommit.piilot.domain.dbscan.repository.DbPiiIssueRepository;
+import com.lastcommit.piilot.domain.dbscan.repository.DbScanHistoryRepository;
 import com.lastcommit.piilot.domain.dbscan.repository.DbServerConnectionRepository;
 import com.lastcommit.piilot.domain.dbscan.repository.DbTableRepository;
 import com.lastcommit.piilot.domain.dbscan.repository.DbmsTypeRepository;
@@ -31,6 +34,9 @@ public class DbConnectionService {
     private final DbServerConnectionRepository connectionRepository;
     private final DbTableRepository dbTableRepository;
     private final DbmsTypeRepository dbmsTypeRepository;
+    private final DbPiiIssueRepository piiIssueRepository;
+    private final DbPiiColumnRepository piiColumnRepository;
+    private final DbScanHistoryRepository scanHistoryRepository;
     private final UserRepository userRepository;
     private final DbConnectionTester connectionTester;
     private final AesEncryptor aesEncryptor;
@@ -143,7 +149,20 @@ public class DbConnectionService {
             throw new GeneralException(DbConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
         }
 
-        // 3. 삭제
+        // 3. Cascade 삭제 (외래키 의존 순서대로)
+        // 3-1. db_pii_issues (connection_id 참조)
+        piiIssueRepository.deleteByConnectionId(connectionId);
+
+        // 3-2. db_pii_columns (db_tables 참조)
+        piiColumnRepository.deleteByDbTableDbServerConnectionId(connectionId);
+
+        // 3-3. db_tables (db_server_connection_id 참조)
+        dbTableRepository.deleteByDbServerConnectionId(connectionId);
+
+        // 3-4. db_scan_history (db_server_connection_id 참조)
+        scanHistoryRepository.deleteByDbServerConnectionId(connectionId);
+
+        // 3-5. db_server_connections
         connectionRepository.delete(connection);
     }
 

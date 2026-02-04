@@ -9,6 +9,12 @@ import java.util.List;
 
 public interface DbPiiColumnRepository extends JpaRepository<DbPiiColumn, Long>, DbPiiColumnCustomRepository {
 
+    // Cascade delete: 특정 테이블의 모든 PII 컬럼 삭제
+    void deleteByDbTableId(Long tableId);
+
+    // Cascade delete: 특정 connection의 모든 PII 컬럼 삭제
+    void deleteByDbTableDbServerConnectionId(Long connectionId);
+
     List<DbPiiColumn> findByDbTableId(Long tableId);
 
     List<DbPiiColumn> findByDbTableDbServerConnectionId(Long connectionId);

@@ -63,16 +63,23 @@ public class UnencryptedDataFetcher {
         }
 
         try (Connection conn = DriverManager.getConnection(jdbcUrl, connection.getUsername(), decryptedPassword)) {
-            String pkColumn = getPrimaryKeyColumn(conn, table.getName(), connection.getDbName(), dbmsType);
-            if (pkColumn == null) {
-                // PK를 찾지 못한 경우 일반적인 패턴 시도
-                pkColumn = findFallbackPkColumn(conn, table.getName());
+            // AI 서버에서 사용한 keyColumn이 저장되어 있으면 그것을 사용
+            String pkColumn = piiColumn.getKeyColumn();
+
+            // keyColumn이 없으면 기존 방식으로 PK 찾기 (하위 호환성)
+            if (pkColumn == null || pkColumn.isBlank()) {
+                pkColumn = getPrimaryKeyColumn(conn, table.getName(), connection.getDbName(), dbmsType);
+                if (pkColumn == null) {
+                    pkColumn = findFallbackPkColumn(conn, table.getName());
+                }
             }
 
             if (pkColumn == null) {
                 log.error("Could not determine primary key column for table '{}'. Cannot fetch unencrypted records.", table.getName());
                 return Collections.emptyList();
             }
+
+            log.debug("Using keyColumn '{}' for table '{}'", pkColumn, table.getName());
 
             List<UnencryptedRecordDTO> records = fetchRecords(conn, dbmsType, table.getName(), pkColumn, piiColumn.getName(), limitedKeys);
             log.debug("Fetched {} unencrypted records for column '{}'", records.size(), piiColumn.getName());
