@@ -11,3 +11,43 @@ logging:
     com.lastcommit.piilot.domain.filescan.service.StubFileAiServerClient: info
     com.lastcommit.piilot.domain.filescan.service.StubMaskingAiServerClient: info
     com.lastcommit.piilot.domain.regulation.client.StubRegulationSearchAiClient: info
+
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/piilot_db
+    username: ${LOCAL_DB_ID}
+    password: ${LOCAL_DB_PW}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway가 테이블 만들고, JPA는 엔티티와 실제 테이블 구조가 일치하는지 검증
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+  docker:
+    compose:
+      enabled: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+encryption:
+  aes-key: piilot-aes-256-secret-key-32by!! # 정확히 32바이트
+
+ai-server:
+  base-url: http://localhost:8000
+  timeout-seconds: 1800  # AI 서버는 LLM 처리로 시간이 오래 걸릴 수 있음
+
+# CORS 설정 (로컬 환경)
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+
