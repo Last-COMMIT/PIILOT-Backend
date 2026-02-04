@@ -5,8 +5,6 @@ import com.lastcommit.piilot.domain.notification.dto.response.NotificationRespon
 import com.lastcommit.piilot.domain.notification.dto.response.NotificationStatsResponseDTO;
 import com.lastcommit.piilot.domain.notification.service.NotificationService;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
-import com.lastcommit.piilot.global.validation.annotation.ValidPage;
-import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -28,8 +26,8 @@ public class NotificationController implements NotificationControllerDocs {
     @GetMapping
     public CommonResponse<Slice<NotificationResponseDTO>> getNotifications(
             @AuthenticationPrincipal Long userId,
-            @ValidPage @RequestParam(defaultValue = "0") int page,
-            @ValidSize @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Slice<NotificationResponseDTO> result = notificationService
             .getNotifications(userId, PageRequest.of(page, size));

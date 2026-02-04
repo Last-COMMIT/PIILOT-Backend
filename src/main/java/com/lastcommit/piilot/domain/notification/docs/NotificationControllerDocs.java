@@ -3,6 +3,8 @@ package com.lastcommit.piilot.domain.notification.docs;
 import com.lastcommit.piilot.domain.notification.dto.response.NotificationResponseDTO;
 import com.lastcommit.piilot.domain.notification.dto.response.NotificationStatsResponseDTO;
 import com.lastcommit.piilot.global.error.response.CommonResponse;
+import com.lastcommit.piilot.global.validation.annotation.ValidPage;
+import com.lastcommit.piilot.global.validation.annotation.ValidSize;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,8 +26,8 @@ public interface NotificationControllerDocs {
     })
     CommonResponse<Slice<NotificationResponseDTO>> getNotifications(
         @Parameter(hidden = true) Long userId,
-        @Parameter(description = "페이지 번호 (0부터 시작)") int page,
-        @Parameter(description = "페이지 크기") int size
+        @ValidPage @Parameter(description = "페이지 번호 (0부터 시작)") int page,
+        @ValidSize @Parameter(description = "페이지 크기") int size
     );
 
     @Operation(
