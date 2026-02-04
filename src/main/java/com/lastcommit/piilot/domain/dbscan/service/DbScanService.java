@@ -275,7 +275,8 @@ public class DbScanService {
                 piiColumn.updateEncryptionResults(
                         encResult.totalRecordsCount(),
                         encResult.encRecordsCount(),
-                        unencKeysJson
+                        unencKeysJson,
+                        encResult.keyColumn()
                 );
             }
         }

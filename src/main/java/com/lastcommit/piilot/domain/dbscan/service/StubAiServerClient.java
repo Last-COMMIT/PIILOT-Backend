@@ -55,6 +55,7 @@ public class StubAiServerClient implements AiServerClient {
 
             results.add(new EncryptionCheckResponseDTO.EncryptionResult(
                     piiColumn.tableName(), piiColumn.columnName(), piiColumn.piiType(),
+                    "id",  // Stub에서는 기본 PK 컬럼명으로 "id" 사용
                     totalRecords, encRecords, unencKeys));
         }
 

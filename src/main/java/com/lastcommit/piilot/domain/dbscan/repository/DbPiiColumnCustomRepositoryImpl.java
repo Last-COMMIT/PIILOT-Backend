@@ -147,7 +147,11 @@ public class DbPiiColumnCustomRepositoryImpl implements DbPiiColumnCustomReposit
         }
 
         if (keyword != null && !keyword.isBlank()) {
-            builder.and(piiColumn.name.containsIgnoreCase(keyword.trim()));
+            String trimmedKeyword = keyword.trim();
+            builder.and(
+                    piiColumn.name.containsIgnoreCase(trimmedKeyword)
+                            .or(dbTable.name.containsIgnoreCase(trimmedKeyword))
+            );
         }
 
         return builder;

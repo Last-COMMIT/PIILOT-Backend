@@ -11,4 +11,7 @@ public interface FileScanHistoryRepository extends JpaRepository<FileScanHistory
     boolean existsByFileServerConnectionIdAndStatus(Long connectionId, ScanStatus status);
 
     Optional<FileScanHistory> findByIdAndFileServerConnectionId(Long id, Long connectionId);
+
+    // Cascade delete: 특정 connection의 모든 스캔 이력 삭제
+    void deleteByFileServerConnectionId(Long connectionId);
 }

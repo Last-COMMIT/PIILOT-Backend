@@ -8,9 +8,13 @@ import com.lastcommit.piilot.domain.filescan.dto.response.FileConnectionStatsRes
 import com.lastcommit.piilot.domain.filescan.entity.FileServerConnection;
 import com.lastcommit.piilot.domain.filescan.entity.FileServerType;
 import com.lastcommit.piilot.domain.filescan.exception.FileConnectionErrorStatus;
+import com.lastcommit.piilot.domain.filescan.repository.FilePiiIssueRepository;
+import com.lastcommit.piilot.domain.filescan.repository.FilePiiRepository;
 import com.lastcommit.piilot.domain.filescan.repository.FileRepository;
+import com.lastcommit.piilot.domain.filescan.repository.FileScanHistoryRepository;
 import com.lastcommit.piilot.domain.filescan.repository.FileServerConnectionRepository;
 import com.lastcommit.piilot.domain.filescan.repository.FileServerTypeRepository;
+import com.lastcommit.piilot.domain.filescan.repository.MaskingLogRepository;
 import com.lastcommit.piilot.domain.shared.ConnectionStatus;
 import com.lastcommit.piilot.domain.user.entity.User;
 import com.lastcommit.piilot.domain.user.repository.UserRepository;
@@ -35,6 +39,10 @@ public class FileConnectionService {
     private final FileServerConnectionRepository connectionRepository;
     private final FileServerTypeRepository serverTypeRepository;
     private final FileRepository fileRepository;
+    private final FilePiiRepository filePiiRepository;
+    private final FilePiiIssueRepository filePiiIssueRepository;
+    private final FileScanHistoryRepository fileScanHistoryRepository;
+    private final MaskingLogRepository maskingLogRepository;
     private final UserRepository userRepository;
     private final FileConnectionTester connectionTester;
     private final AesEncryptor aesEncryptor;
@@ -147,6 +155,23 @@ public class FileConnectionService {
             throw new GeneralException(FileConnectionErrorStatus.CONNECTION_ACCESS_DENIED);
         }
 
+        // Cascade 삭제 (외래키 의존 순서대로)
+        // 1. masking_logs (connection_id 참조)
+        maskingLogRepository.deleteByConnectionId(connectionId);
+
+        // 2. file_pii_issues (connection_id 참조)
+        filePiiIssueRepository.deleteByConnectionId(connectionId);
+
+        // 3. file_pii (file.connection_id 참조)
+        filePiiRepository.deleteByFileConnectionId(connectionId);
+
+        // 4. files (connection_id 참조)
+        fileRepository.deleteByConnectionId(connectionId);
+
+        // 5. file_scan_history (file_server_connection_id 참조)
+        fileScanHistoryRepository.deleteByFileServerConnectionId(connectionId);
+
+        // 6. file_server_connections
         connectionRepository.delete(connection);
     }
 

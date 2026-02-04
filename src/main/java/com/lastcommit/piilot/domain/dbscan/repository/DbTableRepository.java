@@ -10,6 +10,9 @@ import java.util.Optional;
 
 public interface DbTableRepository extends JpaRepository<DbTable, Long> {
 
+    // Cascade delete: 특정 connection의 모든 테이블 삭제
+    void deleteByDbServerConnectionId(Long connectionId);
+
     long countByDbServerConnectionId(Long connectionId);
 
     @Query("SELECT COALESCE(SUM(t.totalColumns), 0) FROM DbTable t WHERE t.dbServerConnection.id = :connectionId")

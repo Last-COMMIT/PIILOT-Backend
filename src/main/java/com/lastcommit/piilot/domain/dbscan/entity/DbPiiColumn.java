@@ -40,6 +40,10 @@ public class DbPiiColumn extends BaseEntity {
     @Column(name = "unenc_records_key", columnDefinition = "TEXT")
     private String unencRecordsKey;
 
+    // 암호화 체크에 사용된 PK 컬럼명
+    @Column(name = "key_column", length = 100)
+    private String keyColumn;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "risk_level", length = 10)
     private RiskLevel riskLevel;
@@ -60,10 +64,11 @@ public class DbPiiColumn extends BaseEntity {
         this.totalIssuesCount = totalIssuesCount != null ? totalIssuesCount : 0;
     }
 
-    public void updateEncryptionResults(Long totalRecordsCount, Long encRecordsCount, String unencRecordsKey) {
+    public void updateEncryptionResults(Long totalRecordsCount, Long encRecordsCount, String unencRecordsKey, String keyColumn) {
         this.totalRecordsCount = totalRecordsCount;
         this.encRecordsCount = encRecordsCount;
         this.unencRecordsKey = unencRecordsKey;
+        this.keyColumn = keyColumn;
     }
 
     public void updateRiskLevel(RiskLevel riskLevel) {
