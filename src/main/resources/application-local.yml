@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/piilot_db
-    username: postgres
-    password: "1234"
+    username: ${LOCAL_DB_ID}
+    password: ${LOCAL_DB_PW}
     driver-class-name: org.postgresql.Driver
 
   jpa:
