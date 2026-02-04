@@ -11,6 +11,8 @@ public record AiRegulationSearchResponseDTO(
     public record AiReferenceDTO(
             @JsonProperty("document_title")
             String documentTitle,
+            @JsonProperty("law_name")
+            String lawName,
             String content,
             String article,
             String page,
