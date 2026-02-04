@@ -1,5 +1,6 @@
 package com.lastcommit.piilot.domain.dbscan.dto.response;
 
+import com.lastcommit.piilot.domain.dbscan.entity.DbPiiColumn;
 import com.lastcommit.piilot.domain.dbscan.entity.DbPiiIssue;
 import com.lastcommit.piilot.domain.shared.RiskLevel;
 import com.lastcommit.piilot.domain.shared.UserStatus;
@@ -11,19 +12,25 @@ public record DbPiiIssueResponseDTO(
         String columnName,
         String piiTypeName,
         String piiTypeCode,
+        Long unencRecordsCount,
         Long totalRecordsCount,
         RiskLevel riskLevel,
         UserStatus userStatus,
         LocalDateTime detectedAt
 ) {
     public static DbPiiIssueResponseDTO from(DbPiiIssue issue) {
+        DbPiiColumn column = issue.getDbPiiColumn();
+        Long total = column.getTotalRecordsCount() != null ? column.getTotalRecordsCount() : 0L;
+        Long enc = column.getEncRecordsCount() != null ? column.getEncRecordsCount() : 0L;
+
         return new DbPiiIssueResponseDTO(
                 issue.getId(),
-                issue.getDbPiiColumn().getName(),
-                issue.getDbPiiColumn().getPiiType().getType().getDisplayName(),
-                issue.getDbPiiColumn().getPiiType().getType().name(),
-                issue.getDbPiiColumn().getTotalRecordsCount(),
-                issue.getDbPiiColumn().getRiskLevel(),
+                column.getName(),
+                column.getPiiType().getType().getDisplayName(),
+                column.getPiiType().getType().name(),
+                total - enc,
+                total,
+                column.getRiskLevel(),
                 issue.getUserStatus(),
                 issue.getDetectedAt()
         );
