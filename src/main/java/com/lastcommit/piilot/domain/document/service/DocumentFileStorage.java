@@ -26,9 +26,10 @@ public class DocumentFileStorage {
     }
 
     public String store(MultipartFile file) {
-        String originalFilename = file.getOriginalFilename();
+        String originalFilename = sanitizeFilename(file.getOriginalFilename());
         String storedFilename = UUID.randomUUID() + "_" + originalFilename;
         Path targetPath = uploadDir.resolve(storedFilename).normalize();
+        validatePathWithinUploadDir(targetPath);
 
         try {
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
@@ -43,10 +44,24 @@ public class DocumentFileStorage {
     public void delete(String storedFilename) {
         try {
             Path filePath = uploadDir.resolve(storedFilename).normalize();
+            validatePathWithinUploadDir(filePath);
             Files.deleteIfExists(filePath);
             log.info("파일 삭제 완료: {}", filePath);
         } catch (IOException e) {
             log.warn("파일 삭제 실패 (무시): {}", storedFilename, e);
+        }
+    }
+
+    private String sanitizeFilename(String originalFilename) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return "unknown";
+        }
+        return Paths.get(originalFilename).getFileName().toString();
+    }
+
+    private void validatePathWithinUploadDir(Path targetPath) {
+        if (!targetPath.startsWith(uploadDir)) {
+            throw new GeneralException(DocumentErrorStatus.INVALID_FILE_TYPE);
         }
     }
 
