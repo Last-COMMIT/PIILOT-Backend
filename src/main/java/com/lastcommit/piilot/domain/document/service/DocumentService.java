@@ -37,15 +37,20 @@ public class DocumentService {
 
         String storedFilename = documentFileStorage.store(file);
 
-        Document document = Document.builder()
-                .user(user)
-                .title(file.getOriginalFilename())
-                .type(documentType)
-                .url(storedFilename)
-                .build();
+        try {
+            Document document = Document.builder()
+                    .user(user)
+                    .title(file.getOriginalFilename())
+                    .type(documentType)
+                    .url(storedFilename)
+                    .build();
 
-        Document saved = documentRepository.save(document);
-        return DocumentListResponseDTO.from(saved);
+            Document saved = documentRepository.save(document);
+            return DocumentListResponseDTO.from(saved);
+        } catch (Exception e) {
+            documentFileStorage.delete(storedFilename);
+            throw e;
+        }
     }
 
     public Slice<DocumentListResponseDTO> getDocumentList(Pageable pageable) {
