@@ -81,6 +81,10 @@ dependencies {
 
     // ZIP file encryption (zip4j)
     implementation 'net.lingala.zip4j:zip4j:2.11.5'
+
+    // AWS S3 SDK v2
+    implementation platform('software.amazon.awssdk:bom:2.25.0')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {

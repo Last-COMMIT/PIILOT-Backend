@@ -36,6 +36,11 @@ cors:
     - http://localhost:3000
     - http://127.0.0.1:3000
 
+aws:
+  s3:
+    region: ap-northeast-2
+    presigned-url-expiration-minutes: 15
+
 logging:
   level:
     com.lastcommit.piilot: debug
