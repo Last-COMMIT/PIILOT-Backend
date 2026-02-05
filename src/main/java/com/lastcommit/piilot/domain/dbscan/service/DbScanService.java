@@ -18,7 +18,10 @@ import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -42,9 +45,26 @@ public class DbScanService {
     private final AesEncryptor aesEncryptor;
     private final ObjectMapper objectMapper;
 
-    @Transactional
+    // 자기 자신 주입 (AOP 프록시를 통한 @Transactional 동작 보장)
+    @Lazy
+    @Autowired
+    private DbScanService self;
+
     public DbScanResponseDTO scanConnection(Long connectionId) {
-        // 1. Connection 조회 + CONNECTED 검증
+        // 1. 스캔 시작 (별도 트랜잭션으로 즉시 커밋)
+        self.markScanStarted(connectionId);
+
+        try {
+            // 2. 실제 스캔 수행 (별도 트랜잭션)
+            return self.executeDbScan(connectionId);
+        } finally {
+            // 3. 스캔 종료 (별도 트랜잭션으로 즉시 커밋)
+            self.markScanStopped(connectionId);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markScanStarted(Long connectionId) {
         DbServerConnection connection = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.CONNECTION_NOT_FOUND));
 
@@ -52,23 +72,24 @@ public class DbScanService {
             throw new GeneralException(DbScanErrorStatus.CONNECTION_NOT_CONNECTED);
         }
 
-        // 2. 스캔 중복 체크
         if (Boolean.TRUE.equals(connection.getIsScanning())) {
             throw new GeneralException(DbScanErrorStatus.SCAN_ALREADY_IN_PROGRESS);
         }
 
-        // 3. 스캔 시작 표시
         connection.startScanning();
-
-        try {
-            return executeDbScan(connection);
-        } finally {
-            connection.stopScanning();
-        }
     }
 
-    private DbScanResponseDTO executeDbScan(DbServerConnection connection) {
-        Long connectionId = connection.getId();
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markScanStopped(Long connectionId) {
+        connectionRepository.findById(connectionId)
+                .ifPresent(DbServerConnection::stopScanning);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public DbScanResponseDTO executeDbScan(Long connectionId) {
+        DbServerConnection connection = connectionRepository.findById(connectionId)
+                .orElseThrow(() -> new GeneralException(DbConnectionErrorStatus.CONNECTION_NOT_FOUND));
+
         long totalStartTime = System.currentTimeMillis();
 
         // ScanHistory 생성 (IN_PROGRESS)
@@ -214,30 +235,19 @@ public class DbScanService {
             }
         }
 
-        // 사라진 PII 컬럼 삭제 + 관련 ACTIVE 이슈 해결 (변경된 테이블에서만)
+        // 사라진 PII 컬럼의 이슈 해결 (변경된 테이블에서만)
+        // 주의: 컬럼은 삭제하지 않음 (이슈 FK 참조 유지를 위해)
         Set<String> changedTableNames = changedTables.stream()
                 .map(SchemaTableInfoDTO::tableName)
                 .collect(Collectors.toSet());
 
-        List<Long> columnIdsToDelete = new ArrayList<>();
         for (Map.Entry<String, DbPiiColumn> entry : existingPiiMap.entrySet()) {
             DbPiiColumn col = entry.getValue();
-            // 변경된 테이블의 PII 컬럼 중 새 스캔에서 발견되지 않은 것만 삭제
+            // 변경된 테이블의 PII 컬럼 중 새 스캔에서 발견되지 않은 것 → 이슈만 해결
             if (changedTableNames.contains(col.getDbTable().getName()) && !newPiiKeys.contains(entry.getKey())) {
                 resolveActiveIssue(col, now);
-                columnIdsToDelete.add(col.getId());
                 activePiiColumnsSet.remove(col);
             }
-        }
-
-        // // ID 기반으로 삭제 (영속성 컨텍스트 문제 회피)
-        // if (!columnIdsToDelete.isEmpty()) {
-        //     dbPiiColumnRepository.deleteAllById(columnIdsToDelete);
-        // }
-        
-        // 에러 발생하여 대체하여 수행하도록 함
-        if (!columnIdsToDelete.isEmpty()) {
-            dbPiiColumnRepository.deleteAllByIdInBatch(columnIdsToDelete);
         }
 
         // Set을 List로 변환 (이후 처리용)

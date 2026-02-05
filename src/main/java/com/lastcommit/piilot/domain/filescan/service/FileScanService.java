@@ -14,8 +14,11 @@ import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -39,8 +42,24 @@ public class FileScanService {
     private final FileAiServerClient fileAiServerClient;
     private final AesEncryptor aesEncryptor;
 
-    @Transactional
+    // 자기 자신 주입 (AOP 프록시를 통한 @Async, @Transactional 동작 보장)
+    @Lazy
+    @Autowired
+    private FileScanService self;
+
     public FileScanResponseDTO startScan(Long connectionId) {
+        // 1. 스캔 초기화 (별도 트랜잭션으로 즉시 커밋 - 비동기 스레드에서 조회 가능하도록)
+        Long scanHistoryId = self.initializeScan(connectionId);
+
+        // 2. 비동기 스캔 시작 (프록시를 통해 호출하여 @Async 동작 보장)
+        self.executeScanAsync(connectionId, scanHistoryId);
+
+        // 3. 응답 반환
+        return self.getScanHistoryResponse(scanHistoryId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long initializeScan(Long connectionId) {
         // 1. Connection validation
         FileServerConnection connection = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new GeneralException(FileScanErrorStatus.CONNECTION_NOT_FOUND));
@@ -49,7 +68,7 @@ public class FileScanService {
             throw new GeneralException(FileScanErrorStatus.CONNECTION_NOT_CONNECTED);
         }
 
-        // 2. Check for existing in-progress scan (isScanning 필드로 확인)
+        // 2. Check for existing in-progress scan
         if (Boolean.TRUE.equals(connection.getIsScanning())) {
             throw new GeneralException(FileScanErrorStatus.SCAN_ALREADY_IN_PROGRESS);
         }
@@ -57,7 +76,7 @@ public class FileScanService {
         // 3. Mark connection as scanning
         connection.startScanning();
 
-        // 5. Create ScanHistory (IN_PROGRESS)
+        // 4. Create ScanHistory (IN_PROGRESS)
         FileScanHistory scanHistory = FileScanHistory.builder()
                 .fileServerConnection(connection)
                 .status(ScanStatus.IN_PROGRESS)
@@ -68,9 +87,13 @@ public class FileScanService {
                 .build();
         scanHistory = scanHistoryRepository.save(scanHistory);
 
-        // 6. Start async scan
-        executeScanAsync(connectionId, scanHistory.getId());
+        return scanHistory.getId();
+    }
 
+    @Transactional(readOnly = true)
+    public FileScanResponseDTO getScanHistoryResponse(Long scanHistoryId) {
+        FileScanHistory scanHistory = scanHistoryRepository.findById(scanHistoryId)
+                .orElseThrow(() -> new GeneralException(FileScanErrorStatus.SCAN_HISTORY_NOT_FOUND));
         return FileScanResponseDTO.from(scanHistory);
     }
 
@@ -79,23 +102,24 @@ public class FileScanService {
         log.info("Starting file scan for connectionId={}", connectionId);
 
         try {
-            executeScan(connectionId, scanHistoryId);
+            // 프록시를 통해 호출하여 @Transactional 동작 보장
+            self.executeScan(connectionId, scanHistoryId);
         } catch (Exception e) {
             log.error("File scan failed for connectionId={}: {}", connectionId, e.getMessage(), e);
-            markScanFailed(scanHistoryId);
+            self.markScanFailed(scanHistoryId);
         } finally {
-            // 스캔 완료/실패 시 isScanning = false
-            markScanStopped(connectionId);
+            // 스캔 완료/실패 시 isScanning = false (프록시를 통해 호출하여 트랜잭션 커밋 보장)
+            self.markScanStopped(connectionId);
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markScanStopped(Long connectionId) {
         connectionRepository.findById(connectionId)
                 .ifPresent(FileServerConnection::stopScanning);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void executeScan(Long connectionId, Long scanHistoryId) {
         FileServerConnection connection = connectionRepository.findById(connectionId)
                 .orElseThrow(() -> new GeneralException(FileScanErrorStatus.CONNECTION_NOT_FOUND));
@@ -306,7 +330,7 @@ public class FileScanService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markScanFailed(Long scanHistoryId) {
         scanHistoryRepository.findById(scanHistoryId)
                 .ifPresent(history -> history.updateFailed(LocalDateTime.now()));
