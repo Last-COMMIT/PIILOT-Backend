@@ -53,7 +53,8 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**"
+                                "/swagger-resources/**",
+                                "/actuator/**"
                         ).permitAll()
                         // ADMIN 전용
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
