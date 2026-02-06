@@ -1,0 +1,57 @@
+# Stub 프로필: AI 서버 없이 Stub 클라이언트로 테스트
+# 사용법: --spring.profiles.active=local,stub
+
+# AI 서버 설정 불필요 (Stub 클라이언트가 mock 응답 반환)
+
+logging:
+  level:
+    com.lastcommit.piilot: debug
+    # Stub 클라이언트 로그 확인용
+    com.lastcommit.piilot.domain.dbscan.service.StubAiServerClient: info
+    com.lastcommit.piilot.domain.filescan.service.StubFileAiServerClient: info
+    com.lastcommit.piilot.domain.filescan.service.StubMaskingAiServerClient: info
+    com.lastcommit.piilot.domain.regulation.client.StubRegulationSearchAiClient: info
+
+aws:
+  s3:
+    region: ap-northeast-2
+    presigned-url-expiration-minutes: 15
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/piilot_db
+    username: ${LOCAL_DB_ID}
+    password: ${LOCAL_DB_PW}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway가 테이블 만들고, JPA는 엔티티와 실제 테이블 구조가 일치하는지 검증
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+  docker:
+    compose:
+      enabled: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+encryption:
+  aes-key: piilot-aes-256-secret-key-32by!! # 정확히 32바이트
+
+ai-server:
+  base-url: http://localhost:8000
+  timeout-seconds: 1800  # AI 서버는 LLM 처리로 시간이 오래 걸릴 수 있음
+
+# CORS 설정 (로컬 환경)
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+

@@ -1,0 +1,41 @@
+# 실제 AI 서버 연동 테스트용 프로필
+# 사용법: ./gradlew bootRun --args='--spring.profiles.active=test-real,secret'
+# 주의: 이 프로필은 local이 아니므로 RealFileAiServerClient가 활성화됨
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/piilot_db
+    username: ${LOCAL_DB_ID}
+    password: ${LOCAL_DB_PW}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+  docker:
+    compose:
+      enabled: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+encryption:
+  aes-key: piilot-aes-256-secret-key-32by!!
+
+# 실제 AI 서버 URL (ngrok)
+ai-server:
+  base-url: https://b7fb674b05b4.ngrok-free.app
+  timeout-seconds: 300
+
+logging:
+  level:
+    com.lastcommit.piilot: debug
+    org.hibernate.SQL: debug

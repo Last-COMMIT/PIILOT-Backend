@@ -36,7 +36,25 @@ out/
 ### VS Code ###
 .vscode/
 
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
 ### application.yml profiles ###
 application-secret.yml
-application-dev.yml
 application-prod.yml
+
+### Claude Code ###
+claude.md
+
+### Project Docs ###
+project_docs/
+
+### Docker Test Data ###
+docker/webdav/data/
+docker/sftp/data/
+docker/ftp/data/
+
+.claude

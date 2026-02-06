@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Gradle 캐시/빌드 결과 (Docker 안에서 새로 빌드하므로 불필요)
+.gradle
+build/
+
+# 프로젝트 문서 (이미지에 필요 없음)
+project_docs/
+*.md
+
+# 테스트용 Docker 파일 서버 (이미지에 필요 없음)
+docker/
+
+# OS 파일
+.DS_Store
+
+# Claude 설정
+.claude

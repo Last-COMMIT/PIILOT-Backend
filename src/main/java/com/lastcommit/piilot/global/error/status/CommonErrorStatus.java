@@ -20,7 +20,16 @@ public enum CommonErrorStatus implements ErrorReason{
     // 페이지네이션 관련
     INVALID_PAGE_NUMBER(HttpStatus.BAD_REQUEST, "PAGE4001", "페이지 번호는 0 이상이어야 합니다."),
     INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "PAGE4002", "페이지 크기는 1 이상 100 이하여야 합니다."),
-            ;
+
+    // 인증 관련
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH4041", "사용자를 찾을 수 없습니다."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTH4091", "이미 존재하는 이메일입니다."),
+    PASSWORD_NOT_MATCH(HttpStatus.BAD_REQUEST, "AUTH4001", "비밀번호가 일치하지 않습니다."),
+    INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "AUTH4011", "비밀번호가 올바르지 않습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH4012", "유효하지 않은 토큰입니다."),
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH4013", "만료된 토큰입니다."),
+
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;
