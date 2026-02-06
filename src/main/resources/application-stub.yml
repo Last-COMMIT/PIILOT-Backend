@@ -12,6 +12,10 @@ logging:
     com.lastcommit.piilot.domain.filescan.service.StubMaskingAiServerClient: info
     com.lastcommit.piilot.domain.regulation.client.StubRegulationSearchAiClient: info
 
+aws:
+  s3:
+    region: ap-northeast-2
+    presigned-url-expiration-minutes: 15
 
 spring:
   datasource:

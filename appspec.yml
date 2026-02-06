@@ -1,0 +1,22 @@
+# ===========================================
+# CodeDeploy 배포 명세서
+# ===========================================
+# CodeDeploy Agent가 이 파일을 읽고 배포를 진행합니다.
+#
+# 동작 순서:
+#   1. scripts/deploy.sh를 EC2-A의 /opt/piilot/scripts/에 복사
+#   2. 복사 완료 후(AfterInstall) deploy.sh를 ubuntu 유저로 실행
+# ===========================================
+
+version: 0.0
+os: linux
+
+files:
+  - source: scripts/deploy.sh
+    destination: /opt/piilot/scripts/
+
+hooks:
+  AfterInstall:
+    - location: scripts/deploy.sh
+      timeout: 300
+      runas: ubuntu
