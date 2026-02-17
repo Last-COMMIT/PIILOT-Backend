@@ -14,7 +14,6 @@ import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +37,7 @@ public class FileScanService {
     private final FileEncryptionChecker fileEncryptionChecker;
     private final FileAiServerClient fileAiServerClient;
     private final AesEncryptor aesEncryptor;
+    private final FileScanAsyncExecutor fileScanAsyncExecutor;
 
     @Transactional
     public FileScanResponseDTO startScan(Long connectionId) {
@@ -68,26 +68,14 @@ public class FileScanService {
                 .build();
         scanHistory = scanHistoryRepository.save(scanHistory);
 
-        // 6. Start async scan
-        executeScanAsync(connectionId, scanHistory.getId());
+        // 6. Start async scan (별도 빈을 통해 호출해야 @Async 프록시가 동작함)
+        fileScanAsyncExecutor.executeScanAsync(connectionId, scanHistory.getId());
 
         return FileScanResponseDTO.from(scanHistory);
     }
 
-    @Async("fileScanExecutor")
-    public void executeScanAsync(Long connectionId, Long scanHistoryId) {
-        log.info("Starting file scan for connectionId={}", connectionId);
-
-        try {
-            executeScan(connectionId, scanHistoryId);
-        } catch (Exception e) {
-            log.error("File scan failed for connectionId={}: {}", connectionId, e.getMessage(), e);
-            markScanFailed(scanHistoryId);
-        } finally {
-            // 스캔 완료/실패 시 isScanning = false
-            markScanStopped(connectionId);
-        }
-    }
+    // executeScanAsync는 FileScanAsyncExecutor로 이동됨
+    // (같은 클래스 내 @Async 자기호출은 Spring 프록시를 거치지 않아 동기 실행됨)
 
     @Transactional
     public void markScanStopped(Long connectionId) {
