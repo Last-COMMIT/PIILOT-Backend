@@ -36,14 +36,18 @@ public class FileScanAsyncExecutor {
     public void executeScanAsync(Long connectionId, Long scanHistoryId) {
         log.info("Starting async file scan for connectionId={}", connectionId);
 
+        // self-invocation 시 @Transactional 프록시를 거치지 않으므로
+        // ApplicationContext를 통해 프록시 빈을 조회하여 호출
+        FileScanAsyncExecutor self = applicationContext.getBean(FileScanAsyncExecutor.class);
+
         try {
             FileScanService fileScanService = applicationContext.getBean(FileScanService.class);
             fileScanService.executeScan(connectionId, scanHistoryId);
         } catch (Exception e) {
             log.error("File scan failed for connectionId={}: {}", connectionId, e.getMessage(), e);
-            markScanFailed(scanHistoryId);
+            self.markScanFailed(scanHistoryId);
         } finally {
-            markScanStopped(connectionId);
+            self.markScanStopped(connectionId);
         }
     }
 
