@@ -14,6 +14,7 @@ import com.lastcommit.piilot.global.error.exception.GeneralException;
 import com.lastcommit.piilot.global.util.AesEncryptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,7 @@ public class FileScanService {
     private final FileEncryptionChecker fileEncryptionChecker;
     private final FileAiServerClient fileAiServerClient;
     private final AesEncryptor aesEncryptor;
-    private final FileScanAsyncExecutor fileScanAsyncExecutor;
+    private final ApplicationContext applicationContext;
 
     @Transactional
     public FileScanResponseDTO startScan(Long connectionId) {
@@ -69,18 +70,10 @@ public class FileScanService {
         scanHistory = scanHistoryRepository.save(scanHistory);
 
         // 6. Start async scan (별도 빈을 통해 호출해야 @Async 프록시가 동작함)
-        fileScanAsyncExecutor.executeScanAsync(connectionId, scanHistory.getId());
+        FileScanAsyncExecutor asyncExecutor = applicationContext.getBean(FileScanAsyncExecutor.class);
+        asyncExecutor.executeScanAsync(connectionId, scanHistory.getId());
 
         return FileScanResponseDTO.from(scanHistory);
-    }
-
-    // executeScanAsync는 FileScanAsyncExecutor로 이동됨
-    // (같은 클래스 내 @Async 자기호출은 Spring 프록시를 거치지 않아 동기 실행됨)
-
-    @Transactional
-    public void markScanStopped(Long connectionId) {
-        connectionRepository.findById(connectionId)
-                .ifPresent(FileServerConnection::stopScanning);
     }
 
     @Transactional
@@ -292,12 +285,6 @@ public class FileScanService {
                     .ifPresent(issue -> issue.resolve(now));
             file.closeIssue();
         }
-    }
-
-    @Transactional
-    public void markScanFailed(Long scanHistoryId) {
-        scanHistoryRepository.findById(scanHistoryId)
-                .ifPresent(history -> history.updateFailed(LocalDateTime.now()));
     }
 
     @Transactional(readOnly = true)
