@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -69,9 +71,16 @@ public class FileScanService {
                 .build();
         scanHistory = scanHistoryRepository.save(scanHistory);
 
-        // 6. Start async scan (별도 빈을 통해 호출해야 @Async 프록시가 동작함)
-        FileScanAsyncExecutor asyncExecutor = applicationContext.getBean(FileScanAsyncExecutor.class);
-        asyncExecutor.executeScanAsync(connectionId, scanHistory.getId());
+        // 6. 트랜잭션 커밋 후 비동기 스캔 시작
+        // (커밋 전에 async 호출하면 다른 스레드에서 scanHistory를 조회할 수 없음)
+        Long scanHistoryId = scanHistory.getId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                FileScanAsyncExecutor asyncExecutor = applicationContext.getBean(FileScanAsyncExecutor.class);
+                asyncExecutor.executeScanAsync(connectionId, scanHistoryId);
+            }
+        });
 
         return FileScanResponseDTO.from(scanHistory);
     }
